@@ -4,7 +4,7 @@
 
 <a href="一些坑.md">一些坑</a>
 
-<a href="Behavior Planing.md">Behavior Planing</a>
+<a href="Behavior Planing/readme.md">Behavior Planing</a>
 
 <a href="DPM/readme.md">DPM</a>
 

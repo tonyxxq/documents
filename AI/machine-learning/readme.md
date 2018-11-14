@@ -1,6 +1,6 @@
 <a href="隐马尔可夫模型.md">隐马尔可夫模型</a>
 
-<a href="EM算法.md">EM算法</a>
+<a href="EM算法.MD">EM算法</a>
 
 <a href="推荐算法.md">推荐算法</a>
 
@@ -20,5 +20,5 @@
 
 <a href="KDTree.md">KDTree</a>
 
-<a href="人脸识别.md">人脸识别</a>
+<a href="人脸识别.MD">人脸识别</a>
 

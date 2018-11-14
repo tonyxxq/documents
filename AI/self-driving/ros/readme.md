@@ -506,8 +506,33 @@
       print "%s + %s = %s"%(x, y, add_two_ints_client(x, y))
   ```
 
+- roswtf
 
+  > [roswtf](http://wiki.ros.org/roswtf) 可以检查 ROS 系统并尝试发现问题
 
+  ```
+  $ roswtf
+  ```
+
+- 录制与回放数据
+
+  ```
+  $ mkdir ~/bagfiles
+  $ cd ~/bagfiles
+  
+  # -a 表示所有话题数据都录制
+  $ rosbag record -a
+  
+  # 查看录制数据的描述信息
+  $ rosbag info <your bagfile>
+  
+  # 回放， -r 2 表示以两倍速率回放
+  $ rosbag play -r 2 <your bagfile>
+  
+  # 录制数据子集 -O subset 表示录制数据保存到 subset.bag 文件中 /turtle1/command_velocity 
+  # /turtle1/pose 表示要录制的话题
+  $ rosbag record -O subset /turtle1/command_velocity /turtle1/pose
+  ```
 
 
 

@@ -18,7 +18,5 @@
 
 <a href="IoU.md">IoU</a>
 
-<a href="KDTree.md">KDTree</a>
-
 <a href="人脸识别.MD">人脸识别</a>
 

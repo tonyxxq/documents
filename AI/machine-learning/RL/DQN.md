@@ -2,7 +2,7 @@
 
 ## DQN
 
-####Q-learning：
+#### Q-learning
 
 例子：
 

@@ -49,21 +49,18 @@
 
 3. 循环如下
 
-   4.1 获取模拟器观察值，输入 eval_q  神经网络，获取值最大的 action
+   - 获取模拟器观察值，输入 eval_q  神经网络，获取值最大的 action
 
-   4.2 在模拟器中执行该 action，并获得返回的奖励、下一个状态、是否终止，更新样本数据集
+   - 在模拟器中执行该 action，并获得返回的奖励、下一个状态、是否终止，更新样本数据集
 
-   4.3 如果当样本数据集达到样本容量，训练（也可多观察几步再训练数据）
+   - 如果当样本数据集达到样本容量，训练（一般多观察几步再训练数据）
 
-   ​	4.3.1 随机获取批量样本数据，分别输入eval_q 网络  和 target_q 网络
+     - 随机获取批量样本数据，分别输入eval_q 网络  和 target_q 网络
 
-   ​	4.3.2 根据公式计算奖励值 R(s, a) 表示该批次数据的奖励值， ![](../imgs/41.png)表示 target_q 输出值，即未来预		    测的奖励值，结果 Q(s, a) 作为 eval_q 网络的 lable
+     - 根据公式计算奖励值 R(s, a) 表示该批次数据的奖励值， ![](../imgs/41.png)表示 target_q 输出值，即未来预测的奖励值，结果 Q(s, a) 作为 eval_q 网络的 lable![](../imgs/39.png)
+     - 使用上面计算出的 Q(s, a) 和 eval_q 的输出值，使用 SGD 进行反向传播，更新 eval_q 参数，这样就能 保证  eval_q  网络是在上升的（之前一直没明白这个地方）
 
-   ​		![](../imgs/39.png)
-
-   ​	4.3.3 使用上面计算出的 Q(s, a) 和 eval_q 的输出值，使用 SGD 进行反向传播，更新 eval_q 参数，这样  就能保证 eval_q  网络是在上升的（之前一直没明白这个地方）
-
-   4. 4  训练一定次数后，更新 target_q参数  为 eval_q  参数
+   - 训练一定次数后，更新 target_q参数  为 eval_q  参数
 
 **注意：如果 terminal 是 true 的话没有未来预测，所以![](../imgs/42.png)是 0 。添加样本集合的目的是因为采集的数据前后有很强的相关性，为了打乱这种相关性，使用在记忆中学习的方式。**
 
@@ -117,7 +114,7 @@ with tf.variable_scope('Value'):
 
 with tf.variable_scope('Advantage'):
      w2 = tf.get_variable('w2',[n_l1,self.n_actions],initializer=w_initializer,collections=c_names)
-     b2 = tf.get_variable('b2',			  [1,self.n_actions],initializer=b_initializer,collections=c_names)
+     b2 = tf.get_variable('b2',[1,self.n_actions],initializer=b_initializer,collections=c_names)
      self.A = tf.matmul(l1,w2) + b2
 
 with tf.variable_scope('Q'):

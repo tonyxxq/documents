@@ -38,11 +38,11 @@ DDPG 是 Actor-Critic（数据不是独立同分布，没有在记忆中学习�
 
 # MADDPG
 
-当**多个智能体**竞争的时候，这个时候环境不仅决定于自己的动作还决定于别的智能体的动作，环境变得不稳定，DDPG 不能解决该问题，所以引入了 MADDPG 算法。
+当多个智能体竞争的时候，使用 MADDPG 算法。
 
-每个Agent的训练同单个 DDPG 算法的训练过程类似，不同的地方主要体现在 **Critic的输入上：在单个Agent的 DDPG 算法中，Critic 的输入是一个 state-action 对信息，但是在 MADDPG 中，每个 Agent 的Critic输入除自身的 state-action 信息外，还可以有额外的信息，比如其他 Agent 的动作**。
+每个Agent的训练同单个 DDPG 算法的训练过程类似，不同的地方主要体现在 **Critic的输入** 上：在单个Agent的 DDPG 算法中，Critic 的输入是一个 state-action 对信息，但是在 MADDPG 中，每个 Agent 的Critic输入除自身的 state-action 信息外，还可以有额外的信息，比如其他 Agent 的动作。
 
-比如有三个智能体，那么需要三个 MADDPG 模型，且分别构建自己的样本空间，样本空间中状态不仅包括自己观察的状态和行为，还包括别的智能体的状态和行为。
+比如有三个智能体，那么需要三个 MADDPG 模型，且分别构建自己的样本空间，样本空间中 状态 不仅包括自己观察的状态和行为，还包括别的智能体的状态和行为。
 
 
 

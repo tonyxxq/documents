@@ -2,9 +2,7 @@
 
 <a href="Policy Gradient.md">Policy Gradient</a>
 
-<a href="DDPG.md">DDPG</a>
-
-<a href="MADDPG.md">MADDPG</a>
+<a href="DDPG和MADDPG.md">DDPG和MADDPG</a>
 
 <a href="Actor-Critic.md">Actor-Critic</a>
 

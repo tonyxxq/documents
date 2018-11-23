@@ -63,8 +63,6 @@
   ssc.start()
   ```
 
-- - 
-
 - 在 spark-shell 中粘贴代码块
 
   1. :paste 

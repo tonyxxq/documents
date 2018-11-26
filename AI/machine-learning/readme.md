@@ -26,5 +26,5 @@
 
 <a href="TensowFlow分布式搭建">TensowFlow分布式搭建</a>
 
-<a href="CFR minimization">CFRminimization</a>
+<a href="CFR minimization.md">CFR minimization</a>
 

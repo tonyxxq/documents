@@ -11,3 +11,7 @@
 <a href="TD.md">TD</a>
 
 <a href="MDP.md">MDP</a>
+
+<a href="DP.md">DP</a>
+
+<a href="DRQN.md">DRQN</a>

@@ -24,3 +24,7 @@
 
 <a href="Spark/readme.md">Spark</a>
 
+<a href="TensowFlow分布式搭建">TensowFlow分布式搭建</a>
+
+<a href="CFR minimization">CFR minimization</a>
+

@@ -28,3 +28,4 @@
 
 <a href="CFR minimization.md">CFR minimization</a>
 
+<a href="Adaboost.md">Adaboost</a>

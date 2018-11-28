@@ -29,3 +29,5 @@
 <a href="CFR minimization.md">CFR minimization</a>
 
 <a href="Adaboost.md">Adaboost</a>
+
+<a href="目标检测/readme.md">目标检测</a>

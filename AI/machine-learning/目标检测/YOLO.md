@@ -34,9 +34,37 @@
 
 #### YOLO v2
 
+YOLO 有两个缺点：1
+
+1. 定位不准确
+2. 和基于 region proposal 的方法相比召回率较低
+
+YOLO v2 是在 YOLO 的基础上增加了一些改进, 从而提升模型的 mAP，如下所示：![](../imgs/91.png)
+
+详细说明每一种改进：
+
+1. Batch Normalization
+
+   在 YOLO v2 中，每个卷积层后面都添加了 Batch Normalization 层（可以一定程度上的正则化），并且不再使用 droput。<a href="../Batch Norm.md">BN</a>
+
+2. High Resolution Classifier
+
+   调整分辨率 为 448\*448，之前的分辨率是 224\*224，分辨率太低不适合目标检测（使用的是 ImageNet 进行迁移学习，因为之前的输入分辨率是 224\*224 ，在之前的分类基础上加入了 fineturn，以满足448 *448）
+
+3. Convolutionlal With Anchor Boxes
+
+4. Dimension Clusters
+
+5. New Network：Darknet-19
+
+6. Direct location prediction
+
+7. Fine-Grained Features  
+
+8. Multi-Scale Training
 
 
-
+步骤：
 
 
 
@@ -45,3 +73,5 @@
 
 
 论文：http://arxiv.org/abs/1506.02640
+
+​	   https://arxiv.org/abs/1612.08242

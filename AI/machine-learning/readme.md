@@ -31,3 +31,5 @@
 <a href="Adaboost.md">Adaboost</a>
 
 <a href="目标检测/readme.md">目标检测</a>
+
+<a href="Batch Norm.md">Batch Norm</a>

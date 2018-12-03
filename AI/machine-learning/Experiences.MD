@@ -24,5 +24,29 @@
 
   ![](imgs/102.png)
 
+* control_dependencies 的用法错误
+
+  > control_dependencies 先执行指定的操作（比如下面代码中的 x_plus_1 操作），再执行内部的操作（比如下面代码中的 y = x），但是如下代码输出是 1,1,1,1,1， 而不是 2,3,4,5,6，原因是 control_dependencies 中的代码需要指定操作（会创建结点）才能执行不能只赋值（不会创建结点），把 y = x 改成 y = tf.identity(x) （是操作，会生成结点）  就可以了。
+  >
+  > **注意：tf.identity 的作用表示返回一个大小一模一样的 tensor。**
+
+  ```python
+  x = tf.Variable(1.0)
+  y = tf.Variable(0.0)
+  
+  x_plus_1 = tf.assign_add(x, 1)
+  
+  with tf.control_dependencies([x_plus_1]):
+      # 下面是错误的写法，正确的是 y = tf.identity(x)
+      y = x
+  
+  init = tf.initialize_all_variables()
+  with tf.Session() as session:
+      init.run()
+      for i in xrange(5):
+          print(y.eval())
+  ```
+
+
 
 

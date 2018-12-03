@@ -251,7 +251,7 @@
 
 8. 展示生成器生成的数据
 
-9. ```python
+   ```python
    import numpy as np
    
    def show_generator_output(sess, n_images, input_z, out_channel_dim, image_mode):
@@ -275,6 +275,8 @@
        pyplot.imshow(images_grid, cmap=cmap)
        pyplot.show()
    ```
+
+代码地址：https://github.com/tonyxxq/face_generation
 
 
 

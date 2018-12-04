@@ -35,3 +35,6 @@
 <a href="Batch Norm.md">Batch Norm</a>
 
 <a href="GAN.md">GAN</a>
+
+<a href="随机森林.md">随机森林</a>
+

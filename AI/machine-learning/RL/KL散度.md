@@ -1,4 +1,4 @@
-## KL散度
+## KL散度（Kullback–Leibler divergence）
 
 KL 散度可以计算两个分布之间的相似性
 
@@ -10,5 +10,9 @@ KL 散度可以计算两个分布之间的相似性
 
 使用K-L散度优化模型：
 
-当确定分布之后，使用不同的概率值去验证 KL散度，直到找到合适的概率值。
+当确定分布之后，使用不同的概率值去验证 KL 散度，直到找到合适的概率值。
+
+
+
+KL 散度和交叉熵之间可以转换：KL divergence(p||q) = cross entropy(p, q) - entropy(p)
 

@@ -40,3 +40,5 @@
 
 <a href=">交叉熵和相对熵.md">交叉熵和相对熵</a>
 
+<a href="RNN.md">RNN</a>
+

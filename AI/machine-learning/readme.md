@@ -42,3 +42,7 @@
 
 <a href="RNN.md">RNN</a>
 
+<a href="关键点检测/readme.md">关键点检测</a>
+
+<a href="遗传算法.md">遗传算法</a>
+

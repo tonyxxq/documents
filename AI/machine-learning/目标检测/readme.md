@@ -4,4 +4,4 @@
 
 <a href="RCNN.md">RCNN</a>
 
-<a href="DarkNet.md">DarkNet</a>
+<a href="SSD.md">SSD</a>

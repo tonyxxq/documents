@@ -49,3 +49,8 @@
 <a href="标注工具.md">标注工具</a>
 
 <a href="HOG.md">HOG</a>
+
+<a href="布谷鸟算法.md">布谷鸟算法</a>
+
+<a href="蚁群算法.md">蚁群算法</a>
+

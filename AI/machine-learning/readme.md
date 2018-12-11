@@ -48,3 +48,4 @@
 
 <a href="标注工具.md">标注工具</a>
 
+<a href="HOG.md">HOG</a>

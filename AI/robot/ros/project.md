@@ -1,0 +1,311 @@
+## 人脸检测
+
+1. 结构图
+
+   ![](imgs/2.png)
+
+   2. 创建 ROS 包
+
+      > mac 不能调用摄像头问题,解决方法： https://github.com/patjak/bcwc_pcie/wiki/Get-Started
+
+      ```
+      # 进入空间
+      $ cd ros_project_dependencies_ws/src/
+
+      # 下载包 web_cam，用于读取摄像头的图像
+      $ git clone https://github.com/bosch-ros-pkg/usb_cam.git
+      $ cd ros_project_dependencies_ws
+      $ catkin_make
+
+      # 安装 v4l-utils
+      sudo apt-get install v4l-utils
+
+      # 创建 face_tracker_pkg 包
+      $ catkin_create_pkg face_tracker_pkg roscpp rospy cv_bridge dynamixel_controllers 	   message_generation
+
+      # 创建 face_tracker_control 包
+      $ catkin_create_pkg face_tracker_control roscpp rospy std_msgs dynamixel_controllers message_generation
+      ```
+
+      > 1. opencv 通过 vision_opencv 这个包集成在 ROS 中，在安装 ROS（全部安装） 的时候就已经安装了，有两个包。
+      >
+      >    cv_bridge：把 OpenCV  的图像类型转位 ROS 的图像消息( sensor_msgs/Image.msg )，或把摄像头获取的图像转换为 OPOpenCV 支持的类型。
+      >
+      >    image_geometry：图像处理
+      >
+      > 2. image_transport 
+      >
+      >    该包使用图像压缩技术减少传递的带宽，在安装 ROS（全部安装） 的时候就已经安装了
+
+   3. 编写 face_tracker_pkg
+
+      ![](imgs/3.png)
+
+   包结构:
+
+   ![](imgs/4.png)
+
+   ​
+
+   ​
+
+face_tracker_node.cpp
+
+```c++
+// ROS headers
+#include <ros/ros.h>
+#include <image_transport/image_transport.h>
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
+
+// Open-CV headers
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include "opencv2/objdetect.hpp"
+
+// Centroid message headers
+#include <face_tracker_pkg/centroid.h>
+
+// OpenCV window name
+static const std::string OPENCV_WINDOW = "raw_image_window";
+static const std::string OPENCV_WINDOW_1 = "face_detector";
+
+
+using namespace std;
+using namespace cv;
+
+class Face_Detector
+{
+  ros::NodeHandle nh_;
+  image_transport::ImageTransport it_;
+  image_transport::Subscriber image_sub_;
+  image_transport::Publisher image_pub_;
+ 
+  ros::Publisher face_centroid_pub;
+
+  face_tracker_pkg::centroid face_centroid;
+
+  string input_image_topic, output_image_topic, haar_file_face;
+  int face_tracking, display_original_image, display_tracking_image, center_offset,      screenmaxx;
+
+  
+public:
+  Face_Detector(): it_(nh_) {
+  // 默认值，使用 track.yaml 文件的内容进行覆盖
+  input_image_topic = "/usb_cam/image_raw";
+  output_image_topic = "/face_detector/raw_image";
+  haar_file_face = "/home/robot/face.xml";
+  face_tracking = 1;
+  display_original_image = 1;
+  display_tracking_image = 1;
+  screenmaxx = 640;
+  center_offset = 100;
+
+  // 加载 track.yaml 问价文件中配置的参数
+  try {
+  	nh_.getParam("image_input_topic", input_image_topic);
+  	nh_.getParam("face_detected_image_topic", output_image_topic);
+  	nh_.getParam("haar_file_face", haar_file_face);
+  	nh_.getParam("face_tracking", face_tracking);
+  	nh_.getParam("display_original_image", display_original_image);
+  	nh_.getParam("display_tracking_image", display_tracking_image);
+  	nh_.getParam("center_offset", center_offset);
+  	nh_.getParam("screenmaxx", screenmaxx);
+
+  	ROS_INFO("Successfully Loaded tracking parameters");
+  } catch(int e) {
+      ROS_WARN("Parameters are not properly loaded from file, loading defaults");
+  }
+
+   // 订阅 input_image_topic，回调函数 imageCb, 发布到 output_image_topic 和 face_centroid
+   image_sub_ = it_.subscribe(input_image_topic, 1, &Face_Detector::imageCb, this);
+   image_pub_ = it_.advertise(output_image_topic, 1);
+   face_centroid_pub = nh_.advertise<face_tracker_pkg::centroid>("/face_centroid", 10);
+  }
+
+  ~Face_Detector() {
+    if( display_original_image == 1 or display_tracking_image == 1)
+    	cv::destroyWindow(OPENCV_WINDOW);
+  }
+
+  // 订阅的回调函数
+  void imageCb(const sensor_msgs::ImageConstPtr& msg) {
+    cv_bridge::CvImagePtr cv_ptr;
+    namespace enc = sensor_msgs::image_encodings;
+
+    // 把获取的 ROS 图像数据转格式换位 OpenCV 的格式
+    try {
+      cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+    } catch (cv_bridge::Exception& e){
+      ROS_ERROR("cv_bridge exception: %s", e.what());
+      return;
+    }
+
+    // 加载分类器
+	string cascadeName = haar_file_face;
+    CascadeClassifier cascade;
+	if(!cascade.load(cascadeName)) {
+		cerr << "ERROR: Could not load classifier cascade" << endl;
+	}
+
+	if (display_original_image == 1) {
+		imshow("Original Image", cv_ptr->image);
+	}
+    
+    // 使用分类器在图像上找出人脸，并且画出来
+    detectAndDraw( cv_ptr->image, cascade );
+    
+    // 发布
+    image_pub_.publish(cv_ptr->toImageMsg());
+    waitKey(30);
+}
+
+// 检测图像并在图像上画出检测出的人脸
+void detectAndDraw( Mat& img, CascadeClassifier& cascade)
+{
+    double t = 0;
+    double scale = 1;
+    vector<Rect> faces, faces2;
+    const static Scalar colors[] =
+    {
+        Scalar(255,0,0),
+        Scalar(255,128,0),
+        Scalar(255,255,0),
+        Scalar(0,255,0),
+        Scalar(0,128,255),
+        Scalar(0,255,255),
+        Scalar(0,0,255),
+        Scalar(255,0,255)
+    };
+    Mat gray, smallImg;
+
+    // 对图像转换位灰度图、resize、直方图均衡化
+    cvtColor( img, gray, COLOR_BGR2GRAY );
+    double fx = 1 / scale ;
+    resize( gray, smallImg, Size(), fx, fx, INTER_LINEAR );
+    equalizeHist(smallImg, smallImg);
+	
+  	// 检测人脸
+    t = (double)cvGetTickCount();
+    cascade.detectMultiScale(smallImg, faces, 1.1, 15, 0 | CASCADE_SCALE_IMAGE, Size(30,       30));
+    t = (double)cvGetTickCount() - t;
+  
+    // 对检测的人脸进行
+    for ( size_t i = 0; i < faces.size(); i++ ) {
+        Rect r = faces[i];
+        Mat smallImgROI;
+        vector<Rect> nestedObjects;
+        Point center;
+        Scalar color = colors[i%8];
+        int radius;
+
+        double aspect_ratio = (double)r.width / r.height;
+        if( 0.75 < aspect_ratio && aspect_ratio < 1.3 ) {
+            center.x = cvRound((r.x + r.width*0.5)*scale);
+            center.y = cvRound((r.y + r.height*0.5)*scale);
+            radius = cvRound((r.width + r.height)*0.25*scale);
+            circle( img, center, radius, color, 3, 8, 0 );
+
+   	    	face_centroid.x = center.x;
+   	    	face_centroid.y = center.y;
+  
+            // 发布计算出的检测到的人脸中心
+  	    	face_centroid_pub.publish(face_centroid);
+        } else {
+            rectangle( img, cvPoint(cvRound(r.x*scale), cvRound(r.y*scale)),
+                       cvPoint(cvRound((r.x + r.width-1)*scale), cvRound((r.y + r.height-						1)*scale)), color, 3, 8, 0);
+        }
+    }
+
+    // 添加左右和中心线,固定的
+    Point pt1, pt2 ,pt3, pt4, pt5, pt6;
+
+    // 中心点
+    pt1.x = screenmaxx / 2;
+    pt1.y = 0;
+    pt2.x = screenmaxx / 2;
+    pt2.y = 480;
+
+    // 左边点
+    pt3.x = (screenmaxx / 2) - center_offset;
+    pt3.y = 0;
+    pt4.x = (screenmaxx / 2) - center_offset;
+    pt4.y = 480;
+
+    // 右边点
+    pt5.x = (screenmaxx / 2) + center_offset;
+    pt5.y = 0;
+    pt6.x = (screenmaxx / 2) + center_offset;
+    pt6.y = 480;
+
+    // 画出这三条线并添加文字
+    line(img,  pt1,  pt2, Scalar(0, 0, 255),0.2);
+    line(img,  pt3,  pt4, Scalar(0, 255, 0),0.2);
+    line(img,  pt5,  pt6, Scalar(0, 255, 0),0.2);
+
+    putText(img, "Left", cvPoint(50,240), FONT_HERSHEY_SIMPLEX, 1, cvScalar(255,0,0), 2, CV_AA);
+    putText(img, "Center", cvPoint(280,240), FONT_HERSHEY_SIMPLEX, 1, cvScalar(0,0,255), 2, CV_AA);
+    putText(img, "Right", cvPoint(480,240), FONT_HERSHEY_SIMPLEX, 1, cvScalar(255,0,0), 2, CV_AA);
+
+    if (display_tracking_image == 1){
+    	imshow( "Face tracker", img );
+     }
+}
+};
+
+int main(int argc, char** argv)
+{
+  ros::init(argc, argv, "Face tracker");
+  Face_Detector ic;
+  ros::spin();
+  return 0;
+}
+
+```
+
+track.yml
+
+> haar_file_face 并不是只用人脸，同时可以检测眼睛等，下载配置文件替换就可以了，下载地址：https://github.com/opencv/opencv/tree/master/data
+
+```
+image_input_topic: "/usb_cam/image_raw"
+face_detected_image_topic: "/face_detector/raw_image"
+haar_file_face: "/home/tony/ros_robotics_projects_ws/src/face_tracker_pkg/data/face.xml"
+face_tracking: 1
+display_original_image: 1
+display_tracking_image: 1
+```
+
+start_usb_cam.launch
+
+```yaml
+<launch>
+	<node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen" >
+		<param name="video_device" value="/dev/video0" />
+		<param name="image_width" value="640" />
+		<param name="image_height" value="480" />
+		<param name="pixel_format" value="yuyv" />
+		<param name="camera_frame_id" value="usb_cam" />
+		<param name="auto_focus" value="false" />
+		<param name="io_method" value="mmap"/>
+	</node>
+</launch>
+```
+
+start_tracking.launch
+
+> 使用 **find** 可以加载别的包下的 lauch 文件和配置文件
+
+```yaml
+<launch>
+	<!-- Launching USB CAM launch files and Dynamixel controllers -->
+	<include file="$(find face_tracker_pkg)/launch/start_usb_cam.launch"/>
+	
+	<!-- Starting face tracker node -->
+	<rosparam file="$(find face_tracker_pkg)/config/track.yaml" command="load"/>
+	
+	<node name="face_tracker" pkg="face_tracker_pkg" type="face_tracker_node" 
+	output="screen" />
+</launch>
+```
+

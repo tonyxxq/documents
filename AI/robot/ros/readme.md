@@ -268,9 +268,9 @@
   >
   > roslaunch功能：
   >
-  > 1. 启动master 和 nodes 
+  > 1. 启动 master 和 nodes 
   > 2. 设置默认参数
-  > 3. 自动服务已经死掉的进程
+  > 3. 自动关闭服务已经死掉的进程
 
   使用 roslaunch 之前需要先确保已经编译过工作空间，且刷新了 steup.bash
 
@@ -280,6 +280,106 @@
   $ source devel/setup.bash
   $ roslaunch simple_arm robot_spawn.launch
   ```
+
+  > Roslaunch 配置文件的标签
+  >
+  > ####node 标签
+  >
+  > 示例：
+  >
+  > ```<node name =“listener1” pkg =“rospy_tutorials” type =“listener.py” args =“ -  test” respawn =“true”/>```
+  >
+  > 必选项：
+  >
+  > - `pkg = "pkg" ` 包名
+  >
+  > - `type = “type” ` 节点类型，**必须有一个具有相同名称的相应可执行文件**
+  >
+  > - `name = “nodename”`，节点基名称。**注意：name 不能包含命名空间。请改用`ns`属性**
+  >
+  > 可选项：
+  >
+  > - `args = “arg1 arg2 arg3” `，传递参数到节点，示例：args="-resolution  $(arg resolution)"，在代码的main 方法上应该能取到该值
+  >
+  > - `machine = “machine-name” `在指定机器上启动节点
+  > - `respawn = “true” ` 如果节点退出，则自动重新启动节点
+  >
+  > - `respawn_delay =“30” `*（默认为 0）*如果`respawn`为`true`，等到指定秒再重启
+  >
+  > - `required = “true” ` 如果节点死亡，杀死整个 roslaunch
+  >
+  > - `ns = “foo” `在指定命名空间中启动节点
+  >
+  > - `clear_params = “true | false” `在启动前删除节点的私有命名空间中的所有参数
+  >
+  > - `output =“log | screen” ` 如果'screen'，stdout / stderr 从节点将被发送到屏幕；如果是 “log”，stdout / stderr 输出将被发送到$ ROS_HOME/ log 中的日志文件，stderr 将继续发送到屏幕。默认值为  “log”
+  >
+  > - `cwd = “ROS_HOME | node” ` 如果为 “node”，则节点的工作目录将设置为与节点的可执行文件相同的目录
+  >
+  > - `launch-prefix = “prefix arguments” ` 用于预先添加到节点的启动参数的命令/参数。这是一个强大的功能，使您能够启用`gdb`，`valgrind`，`xterm`，`漂亮`或其他方便的工具
+  >
+  > ####rosparam
+  >
+  > 可从 yaml 文件读取参数
+  >
+  > 示例：
+  >
+  > <rosparam command="load" file="$(find rosparam)/example.yaml" />
+  > <rosparam command="delete" param="my/param" />
+  >
+  > #### param
+  >
+  > 可用于直接设置参数
+  >
+  > 示例
+  >
+  > <param name="pixel_format" value="yuyv"/>
+  >
+  > ####include
+  >
+  > 导入别的 launch 文件
+  >
+  > <include file="$(find face_tracker_pkg)/launch/start_usb_cam.launch"/>
+  >
+  > #### arg 
+  >
+  > 用于给launch文件内部设置参数
+  >
+  > included.launch 文件
+  >
+  > ```xml
+  > <launch>
+  >   	<!--定义该参数是传进来的，也可以定义 value，但是 default 可以被覆盖，value 不能-->
+  >   	<arg name="hoge" default="default"/> 
+  >   
+  >     <!--使用该参数-->
+  >     <param name="param" value="$(arg hoge)"/>
+  > </launch>
+  > ```
+  >
+  > my_file.launch 文件
+  >
+  > ```xml
+  > <include file="included.launch">
+  >     <!--传递参数-->
+  >     <arg name="hoge" value="fuga" />
+  > </include>
+  > ```
+  >
+  > 也可以通过命令行传递参数
+  >
+  > ```
+  > $ roslaunch my_file.launch hoge:=my_value 
+  > ```
+  >
+  > #### remap
+  >
+  > 给结点设置重新映射
+  >
+  > ```xml
+  > <!--将当且节点话题 chatter 映射成 hello-->
+  > <remap from="chatter" to="hello"/>
+  > ```
 
 - 查看和安装依赖（Rosdep）
 
@@ -336,16 +436,55 @@
   $ rosed beginner_tutorials AddTwoInts.srv
   ```
 
-- 参数服务器
+- rosparam 可以对参数服务器上的参数进行操作，有以下几种方式
 
-  > rosparam  -h：
+  > 1. 命令行
   >
-  > rosparam  set              设置参数
-  > rosparam  get              获取参数
-  > rosparam  load            从文件读取参数
-  > rosparam  dump         向文件中写入参数
-  > rosparam  delete         删除参数
-  > rosparam  list               列出参数名
+  >    ```
+  >    rosparam  -h：
+  >    rosparam  set     [参数名]     [参数值]    设置参数
+  >    rosparam  get     [参数名]                获取参数
+  >    rosparam  load    [文件地址]              从文件读取参数，
+  >    rosparam  dump    [文件地址]              向文件中写入参数
+  >    rosparam  delete  [参数名]                删除参数
+  >    rosparam  list                           列出参数名
+  >    ```
+  >
+  > 2. 配置文件
+  >
+  >     roslaunch 配置文件中 node 标签中添加，参考上面讲解的 roslaunch
+  >
+  > 3. 代码
+  >
+  >    *param  和  getParam 都能获取参数值，区别是 param 可以设置默认值*
+  >
+  >    ```c++
+  >    ros::init(argc, argv, "param_demo");
+  >    
+  >    // n 使用的是全局空间，pn 使用的是 ~my_namespce 空间
+  >    // 所以 “string_param” 是全局的参数，“int_param” 是在命名空间 my_namespace下的参数
+  >    ros::NodeHandle n;
+  >    ros::NodeHandle pn("~my_namespce");
+  >    
+  >    td::string s;
+  >    int num;
+  >    
+  >    // 初始化参数值
+  >    n.param<std::string>("string_param", s, "haha");
+  >    pn.param<int>("int_param", num, 666);
+  >    
+  >    // 输出被初始化后的变量值
+  >    ROS_INFO("string_param_init: %s", s.c_str());
+  >    ROS_INFO("int_param_init: %d", num);
+  >    
+  >    // 设置参数的值
+  >    n.setParam("string_param", "hehe");
+  >    pn.setParam("int_param", 222);
+  >        
+  >    //获取参数的值；
+  >    n.getParam("string_param", s);
+  >    pn.getParam("int_param", num)；
+  >    ```
 
 - rqt_console 和 rqt_logger_level
 
@@ -414,7 +553,6 @@
       rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
       
   def listener():
-  
       # In ROS, nodes are uniquely named. If two nodes with the same
       # node are launched, the previous one is kicked off. The
       # anonymous=True flag means that rospy will choose a unique

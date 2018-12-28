@@ -7,31 +7,35 @@
    2. 创建 ROS 包
 
       > mac 不能调用摄像头问题,解决方法： https://github.com/patjak/bcwc_pcie/wiki/Get-Started
+      >
+      > v4l-utils：实时从 webcam 抓取视频
+      >
+      > usb_cam：获取 v4l 的视频流，并且发布为 ROS 图像消息
 
       ```
       # 进入空间
       $ cd ros_project_dependencies_ws/src/
-
-      # 下载包 web_cam，用于读取摄像头的图像
+      
+      # 下载包 web_cam，用于读取摄像头的图像，可以放到一个第三方包空间中
       $ git clone https://github.com/bosch-ros-pkg/usb_cam.git
       $ cd ros_project_dependencies_ws
       $ catkin_make
-
+      
       # 安装 v4l-utils
       sudo apt-get install v4l-utils
-
+      
       # 创建 face_tracker_pkg 包
       $ catkin_create_pkg face_tracker_pkg roscpp rospy cv_bridge dynamixel_controllers 	   message_generation
-
+      
       # 创建 face_tracker_control 包
       $ catkin_create_pkg face_tracker_control roscpp rospy std_msgs dynamixel_controllers message_generation
       ```
 
-      > 1. opencv 通过 vision_opencv 这个包集成在 ROS 中，在安装 ROS（全部安装） 的时候就已经安装了，有两个包。
+      > 1. opencv 通过 vision_opencv 这个包集成在 ROS 中，在安装 ROS（全部安装） 的时候就已经安装了，有两个包
       >
-      >    cv_bridge：把 OpenCV  的图像类型转位 ROS 的图像消息( sensor_msgs/Image.msg )，或把摄像头获取的图像转换为 OPOpenCV 支持的类型。
+      >    cv_bridge：把 OpenCV  的图像类型转为 ROS 的图像消息( sensor_msgs/Image.msg )，或把摄像头获取的图像转换为 OpenCV 支持的类型
       >
-      >    image_geometry：图像处理
+      >    image_geometry：提供了一系列关于图像几何处理的方法
       >
       > 2. image_transport 
       >
@@ -70,13 +74,12 @@ face_tracker_node.cpp
 static const std::string OPENCV_WINDOW = "raw_image_window";
 static const std::string OPENCV_WINDOW_1 = "face_detector";
 
-
 using namespace std;
 using namespace cv;
 
-class Face_Detector
-{
+class Face_Detector {
   ros::NodeHandle nh_;
+  
   image_transport::ImageTransport it_;
   image_transport::Subscriber image_sub_;
   image_transport::Publisher image_pub_;
@@ -90,7 +93,9 @@ class Face_Detector
 
   
 public:
+  
   Face_Detector(): it_(nh_) {
+  
   // 默认值，使用 track.yaml 文件的内容进行覆盖
   input_image_topic = "/usb_cam/image_raw";
   output_image_topic = "/face_detector/raw_image";
@@ -133,7 +138,7 @@ public:
     cv_bridge::CvImagePtr cv_ptr;
     namespace enc = sensor_msgs::image_encodings;
 
-    // 把获取的 ROS 图像数据转格式换位 OpenCV 的格式
+    // 把获取的 ROS 图像数据转换为 OpenCV 的格式
     try {
       cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
     } catch (cv_bridge::Exception& e){
@@ -166,8 +171,7 @@ void detectAndDraw( Mat& img, CascadeClassifier& cascade)
     double t = 0;
     double scale = 1;
     vector<Rect> faces, faces2;
-    const static Scalar colors[] =
-    {
+    const static Scalar colors[] = {
         Scalar(255,0,0),
         Scalar(255,128,0),
         Scalar(255,255,0),
@@ -187,7 +191,7 @@ void detectAndDraw( Mat& img, CascadeClassifier& cascade)
 	
   	// 检测人脸
     t = (double)cvGetTickCount();
-    cascade.detectMultiScale(smallImg, faces, 1.1, 15, 0 | CASCADE_SCALE_IMAGE, Size(30,       30));
+    cascade.detectMultiScale(smallImg, faces, 1.1, 15, 0 | CASCADE_SCALE_IMAGE,     Size(30, 30));
     t = (double)cvGetTickCount() - t;
   
     // 对检测的人脸进行
@@ -213,7 +217,7 @@ void detectAndDraw( Mat& img, CascadeClassifier& cascade)
   	    	face_centroid_pub.publish(face_centroid);
         } else {
             rectangle( img, cvPoint(cvRound(r.x*scale), cvRound(r.y*scale)),
-                       cvPoint(cvRound((r.x + r.width-1)*scale), cvRound((r.y + r.height-						1)*scale)), color, 3, 8, 0);
+                       cvPoint(cvRound((r.x + r.width-1)*scale), cvRound((r.y +	 	r.height-1)*scale)), color, 3, 8, 0);
         }
     }
 
@@ -247,14 +251,13 @@ void detectAndDraw( Mat& img, CascadeClassifier& cascade)
     putText(img, "Center", cvPoint(280,240), FONT_HERSHEY_SIMPLEX, 1, cvScalar(0,0,255), 2, CV_AA);
     putText(img, "Right", cvPoint(480,240), FONT_HERSHEY_SIMPLEX, 1, cvScalar(255,0,0), 2, CV_AA);
 
-    if (display_tracking_image == 1){
+    if (display_tracking_image == 1) {
     	imshow( "Face tracker", img );
      }
 }
 };
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
   ros::init(argc, argv, "Face tracker");
   Face_Detector ic;
   ros::spin();
@@ -305,7 +308,9 @@ start_tracking.launch
 	<rosparam file="$(find face_tracker_pkg)/config/track.yaml" command="load"/>
 	
 	<node name="face_tracker" pkg="face_tracker_pkg" type="face_tracker_node" 
-	output="screen" />
+	output="screen"/>
 </launch>
 ```
+
+## 聊天机器人
 

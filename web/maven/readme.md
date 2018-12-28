@@ -1,3 +1,5 @@
+##搭建 nexus 服务器：
+
 1. 进入目录
 
    cd /data/edu
@@ -50,7 +52,9 @@
 
 10. 通过浏览器访问，默认的账号密码是 admin  admin123
 
-    ![](imgs/index.jpg)
+   ![](imgs/index.jpg)
 
-    ​
+   ​
+
+## 安装包到仓库
 

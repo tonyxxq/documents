@@ -15,18 +15,18 @@
       ```
       # 进入空间
       $ cd ros_project_dependencies_ws/src/
-      
+
       # 下载包 web_cam，用于读取摄像头的图像，可以放到一个第三方包空间中
       $ git clone https://github.com/bosch-ros-pkg/usb_cam.git
       $ cd ros_project_dependencies_ws
       $ catkin_make
-      
+
       # 安装 v4l-utils
       sudo apt-get install v4l-utils
-      
+
       # 创建 face_tracker_pkg 包
       $ catkin_create_pkg face_tracker_pkg roscpp rospy cv_bridge dynamixel_controllers 	   message_generation
-      
+
       # 创建 face_tracker_control 包
       $ catkin_create_pkg face_tracker_control roscpp rospy std_msgs dynamixel_controllers message_generation
       ```
@@ -263,7 +263,6 @@ int main(int argc, char** argv) {
   ros::spin();
   return 0;
 }
-
 ```
 
 track.yml
@@ -313,4 +312,151 @@ start_tracking.launch
 ```
 
 ## 聊天机器人
+
+####AIML 数据格式
+
+> AIML 是一种基于 XML 语言的数据存储格式，能很好的进行数据存储和检索
+
+示例
+
+category：输入和输出放在里边
+
+pattern：输入的内容
+
+template：输入内容
+
+\*：匹配任何内容
+
+star：n 表示匹配到的第几个
+
+```xml
+<aiml version="1.0.1" encoding="UTF-8">
+	<category>
+		<pattern> MY NAME IS * </pattern>
+		<template>
+			NICE TO SEE YOU <star index="1"/>
+		</template>
+		</category>
+	<category>
+		<pattern> MEET OUR ROBOTS * AND * </pattern>
+		<template>
+			NICE TO SEE <star index="1"/>AND <star index="2"/>.
+		</template>
+	</category>
+</aiml>
+```
+
+输入：You: MY NAME IS LENTIN 
+
+回答： Robot: NICE TO SEE YOU LENTIN
+
+输入：You: MEET OUR ROBOTS ROBIN AND TURTLEBOT
+回答：Robot: NICE TO SEE ROBIN AND TURTLEBOT    
+
+####PyAIML interpreter
+
+> PyAIML interpreter 可以加载 AIML 数据并生成一棵树，使用深度优先搜索查询数据。
+
+安装：
+
+```
+$ sudo apt-get install python-aiml
+```
+
+简单使用：
+
+```python
+import aiml
+
+bot = aiml.Kernel()
+bot.setBotPredicate("name", ROBIN)
+#　加载指定的 AIML 文件
+bot.learn('sample.aiml")
+print bot.respond("MY NAME IS LENTIN")
+```
+
+加载多个 AIML 文件：
+
+```xml
+<aiml version="1.0">
+<category>
+	<pattern>LOAD AIML B</pattern>
+		<template>
+			<!-- 可以加载指定目录下的所有 AIML 文件 -->
+			<learn>*.aiml</learn>
+		</template>
+	</category>
+</aiml>
+```
+
+示例代码：
+
+```python
+import aiml
+import sys
+import os
+
+#　设置 AIML 文件夹的路径
+os.chdir('/home/robot/Desktop/aiml/aiml_data_files') 
+bot =　aiml.Kernel()
+
+# 判断该目录下是否有　brainFile，有就直接加载　brainFile，没有生成　brainFile，这样就不用程序执行的
+# 时候都生成一遍
+initialize using bootstrap() method
+if os.path.isfile("standard.brn"): 
+  bot.bootstrap(brainFile =　"standard.brn") 
+else:
+　brain bot.bootstrap(learnFiles = "startup.xml", commands = "load　aiml b") 　bot.saveBrain("standard.brn")
+
+# 输入数据获得输出
+while True: 
+  print bot.respond(raw_input("Enter input >"))
+```
+
+####搭建聊天机器人
+
+结构图：
+
+![](imgs/5.png)AIML ROS 包
+
+结点之间的关系图：
+
+![](imgs/6.png)
+
+安装　ROS sound_play 包
+
+```
+# 安装依赖项
+$ sudo apt-get install libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good　gstreamer1.0-plugins-ugly python-gi festival
+
+＃　安装　sound_play
+ros_project_dependencies_ws/src$ git clone https://github.com/ros-drivers/audio_common
+
+ros_project_dependencies_ws$ catkin_make
+
+# 能成功进入则表示安装成功
+$ roscd sound_play
+```
+
+创建　ROS AIML 包：
+
+```
+catkin_create_pkg ros_aiml rospy std_msgs sound_play
+```
+
+目录结构位：
+
+![](imgs/7.png)
+
+代码：。。。
+
+启动结点：
+
+    $ sudo chmod +x *.launch
+    $ roslaunch ros_aiml start_chat.launch
+    $ roslaunch ros_aiml start_speech_chat.launch
+    
+    # 下载这个可以进行语音识别,还没试过
+    $ roslaunch pocketsphinx robotcup.launch
+## 目标检测
 

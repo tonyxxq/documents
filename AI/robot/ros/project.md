@@ -460,3 +460,70 @@ catkin_create_pkg ros_aiml rospy std_msgs sound_play
     $ roslaunch pocketsphinx robotcup.launch
 ## 目标检测
 
+####find_object 包
+
+> find_object_2d 实现了 SURF, SIFT, FAST,and BRIEF 特征提取方式和描述子，且可以标注出物体进行保存，作为之后的物检测，且可以发布检测到的目标
+
+安装
+
+```
+# 直接安装
+$ sudo apt-get install ros-kinetic-find-object-2d
+$ catkin_make
+
+# 或通过克隆下载安装
+$ git clone https://github.com/introlab/find-object.git src/find_object_2d
+$ catkin_make
+```
+
+执行 2D 目标检测：
+
+```
+$ roscore
+
+# 需要先安装 usb_cam，启动
+$ roslaunch usb_cam usb_cam-test.launch
+
+# 使用 /usb_cam/image_raw 主题数据作为 find_object_2d 的输入
+$ rosrun find_object_2d find_object_2d image:=/usb_cam/image_raw
+
+# 打印检测出的物体的位置
+$ rosrun find_object_2d print_objects_detected
+
+# /objects 主题下可以获取检测到目标的详细信息，包括检测出物体的宽、高、单应矩阵
+/objects
+```
+
+使用深度传感器，执行 3D 目标检测：
+
+```
+# 下面装的依赖和前面的装的 usb_cam 作用是一样的，就是获取摄像头数据
+# Kinect 一代需要的依赖
+$ sudo apt-get install ros-kinetic-openni-launch
+
+# Kinect 二代需要自己克隆安装依赖
+$ git clone https://github.com/code-iai/iai_kinect2
+
+# 使用 Kinect 一代, 启动，操作之后的操作和之前 2D 的操作是一样的
+$ roslaunch openni_launch openni.launch depth_registration:=true
+
+# 启动 find_object_3d
+$ roslaunch find_object_2d find_object_3d.launch
+```
+
+####  3D 物体识别， Object Recognition Kitchen ( ORK)
+
+安装：
+
+```
+$ sudo apt-get install ros-kinetic-object-recognition-*
+
+# 可以下载 ork 教程
+$ git clone https://github.com/wg-perception/ork_tutorials
+
+# 
+
+```
+
+
+

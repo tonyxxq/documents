@@ -662,7 +662,7 @@
   
   # 回放， -r 2 表示以两倍速率回放
   $ rosbag play -r 2 <your bagfile>
-  
+  ec
   # 录制数据子集 -O subset 表示录制数据保存到 subset.bag 文件中 /turtle1/command_velocity 
   # /turtle1/pose 表示要录制的话题
   $ rosbag record -O subset /turtle1/command_velocity /turtle1/pose

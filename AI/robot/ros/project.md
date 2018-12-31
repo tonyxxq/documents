@@ -491,8 +491,26 @@ $ rosrun find_object_2d find_object_2d image:=/usb_cam/image_raw
 $ rosrun find_object_2d print_objects_detected
 
 # /objects 主题下可以获取检测到目标的详细信息，包括检测出物体的宽、高、单应矩阵
-/objects
+$ rostopic echo /objects
 ```
+
+![](imgs/8.png)
+
+> 在左边空白处点击鼠标右键，可以选择 add objects from screen 和 add objects from files，这里选择第一个，然后选择　 take  picture，　
+
+![](imgs/9.png)
+
+> 选择区域或关键点
+
+![](imgs/10.png)
+
+> 选择　End ，可以对指定的物体进行检测了
+
+![](imgs/11.png)
+
+这时 /objects 主题下也有数据了
+
+![](imgs/12.png)
 
 使用深度传感器，执行 3D 目标检测：
 
@@ -522,8 +540,158 @@ $ sudo apt-get install ros-kinetic-object-recognition-*
 $ git clone https://github.com/wg-perception/ork_tutorials
 
 # 
-
 ```
 
 
 
+## ROS 和深度学习的集成
+
+安装 tensorflow
+
+> 在安装过程中遇到如下问题：
+>
+> １．　提示 pip升级，升级完之后出现　cannot from pip import main　问题。
+>
+> ​	解决办法：
+>
+> ​	sudo  gedit /usr/bin/pip
+>
+> ​	把　from pip import main　修改为　from pip._internal import main
+>
+> ２．无法下载　tensorflow,　pip 源的问题
+>
+> ​	解决办法：
+>
+> ​	修改 ~/.pip/pip.conf (没有就创建一个文件夹及文件，文件夹要加"."，表示是隐藏文件夹)，内容如下：
+> ​	[global]
+> ​	index-url = https://pypi.tuna.tsinghua.edu.cn/simple
+> ​	install]
+>
+> 　　trusted-host=mirrors.aliyun.com	
+
+```
+# 安装 pip
+$ sudo apt-get install python-pip python-dev
+
+# tensorflow 二进制　URL（cpu）
+$ export TF_BINARY_URL=https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.11.0-cp27-none-linux_x86_64.whl
+
+# tensorflow 二进制　URL（gpu）
+$ export TF_BINARY_URL=https://storage.googleapis.com/tensorflow/linux/gpu/tensorflow-0.11.0-cp27-none-linux_x86_64.whl
+
+# 安装　tensorflow
+$ sudo pip install --upgrade $TF_BINARY_URL
+```
+
+安装成功：
+
+![](imgs/13.png)
+
+使用 tensorflow 进行图像识别：
+
+> 遇到问题
+>
+> 在执行 `python image_recognition.py image:=/cv_camera/image_raw `  过程中出现　
+>
+> ```
+> TA protocol message was rejected because it was too big (more than 67108864 bytes).
+> ```
+>
+> 解决方法：
+>
+> 设置换进变量　export  PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
+
+```
+# 安装 cv_bridge
+$ sudo apt-get install ros-kinetic-cv-bridge ros-kinetic-cv-camera
+
+$ roscore
+
+# 开启摄像头
+$ rosrun cv_camera cv_camera_node
+
+# 执行图像识别，设置图像输入
+$ python image_recognition.py image:=/cv_camera/image_raw
+
+# 识别出的物体通过 /result 主题进行输出 
+$ rostopic echo /result
+
+#　image_view 查看图像，　默认选择全部安装 ros 时会自动安装 image_view, 如果没有，则安装　
+# sudo apt-get install ros-kinetic-image-view
+$ rosrun image_view image_view image:= /cv_camera/image_raw
+```
+
+image_recognition.py 代码：
+
+```python
+import rospy
+from sensor_msgs.msg import Image
+from std_msgs.msg import String
+from cv_bridge import CvBridge
+import cv2
+import numpy as np
+import tensorflow as tf
+from tensorflow.models.image.imagenet import classify_image
+
+
+class RosTensorFlow():
+    def __init__(self):
+        # 下载tensorflow 模型，下载地址为 /tmp/imagenet
+        classify_image.maybe_download_and_extract()
+        
+        self._session = tf.Session()
+        classify_image.create_graph()
+        self._cv_bridge = CvBridge()
+
+        self._sub = rospy.Subscriber('image', Image, self.callback, queue_size=1)
+        self._pub = rospy.Publisher('result', String, queue_size=1)
+        
+        #　评分阈值和显示数量
+        self.score_threshold = rospy.get_param('~score_threshold', 0.1)
+        self.use_top_k = rospy.get_param('~use_top_k', 5)
+
+    def callback(self, image_msg):
+        cv_image = self._cv_bridge.imgmsg_to_cv2(image_msg, "bgr8")
+        
+        # copy from https://github.com/tensorflow/tensorflow/blob/master/tensorflow
+        # /models/image/imagenet/classify_image.py
+        image_data = cv2.imencode('.jpg', cv_image)[1].tostring()
+        
+        # Creates graph from saved GraphDef.softmax_tensor　是计算图中的一个tensor,　长度是　
+        # 1000，即能识别出 1000 种类型
+        softmax_tensor = self._session.graph.get_tensor_by_name('softmax:0')
+        predictions = self._session.run(
+            softmax_tensor, {'DecodeJpeg/contents:0': image_data})
+        predictions = np.squeeze(predictions)
+        
+        # Creates node ID --> English string lookup.
+        node_lookup = classify_image.NodeLookup()
+        top_k = predictions.argsort()[-self.use_top_k:][::-1]
+        for node_id in top_k:
+            human_string = node_lookup.id_to_string(node_id)
+            score = predictions[node_id]
+            if score > self.score_threshold:
+                rospy.loginfo('%s (score = %.5f)' % (human_string, score))
+                # 识别出物体，发布
+                self._pub.publish(human_string)
+
+    def main(self):
+        rospy.spin()
+
+if __name__ == '__main__':
+    rospy.init_node('rostensorflow')
+    tensor = RosTensorFlow()
+    tensor.main()
+```
+
+很遗憾的是上面的识别任务只能识别出图像的物体，并没有标出物体的位置。
+
+#### 使用 darknet_ros　
+
+# 安装
+
+https://github.com/leggedrobotics/darknet_ros
+
+##　使用　web 控制机器人
+
+https://blog.csdn.net/u010853356/article/details/79226764

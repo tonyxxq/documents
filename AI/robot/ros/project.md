@@ -1046,6 +1046,77 @@ $ roslaunch joint_state_publisher_js core.launch
 $ sudo apt-get install apache2
 ```
 
+使用 chrome 的浏览器的语音识别
+
+> 使用了 webkitSpeechRecognition API
+>
+> - SpeechRecognition.lang：设置识别的是什么语言，cmn-Hans-CN 代表普通话
+> - SpeechRecognition.interimResults：定义 speech recognition 系统要不要返回临时结果(interim results)，还是只返回最终结果。
+> - SpeechRecognition.maxAlternatives ：定义每次结果返回的可能匹配值的数量
+> - recognition.continuous：是否等说完了再开始识别
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<script>
+ if (!('webkitSpeechRecognition' in window)) {
+    console.log("not supported");
+} else { 
+    var recognition = new webkitSpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    
+    recognition.lang = "en-US";
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = function() {
+    	console.log('started');
+    };
+   
+    recognition.onend = function() {
+       console.log('ended');
+    };
+
+    recognition.onresult = function(event) {
+       // no result
+       if (typeof(event.results) === 'undefined') {
+           recognition.stop();
+	   console.log('no result');
+           return;
+       }
+       
+       // result
+       for (var i = event.resultIndex; i < event.results.length; ++i) {
+	    　　// 可以获得识别的信度　event.results[i][0].confidence
+         　if (event.results[i].isFinal) {
+	        　　console.log("final results: " + event.results[i][0].transcript);
+	    　　} else {
+	        　　console.log("interim results: " + event.results[i][0].transcript);
+	    　　}
+	　　}
+    }
+
+    recognition.onerror = function(event) {
+    　　console.log("error");
+	　　console.log(event);
+    }
+
+    function startButton(event) {
+	　　recognition.start();
+    }
+}
+</script>
+</head>
+<body>
+  <button onclick="startButton(event);">start</button>
+</body>
+</html>
+```
+
+
+
 启动
 
 ```

@@ -694,4 +694,368 @@ https://github.com/leggedrobotics/darknet_ros
 
 ##　使用　web 控制机器人
 
+####rosbridge_suite
+
+> rosbridge_suite 相当于 web 和 ros 的中间，负责数据转换（web 端需要的是 json 数据，ros 端需要的是主题数据），负责转换的结点名称为　rosbridge_server，消息类型位 service。
+
+结构图：
+
+![![img](file:///home/tony/documents/AI/robot/ros/imgs/14.png?lastModify=1546255462)](imgs/14.png)
+
+> rosbridge_suite 包含下面三个包：
+>
+> 1. rosbridge_library：包含 Python API 把 JSON 消息转换为 ROS 消息
+> 2. rosbridge_server：使用 WebSocket 实现了 rosbridge 库，通过这个包实现和  web 端的数据通信
+> 3. rosapi ：可以通过这个包获取 ROS 的主题列表、参数等元数据 
+
+安装 rosbridge_suite
+
+```
+$ sudo apt-get update
+$ sudo apt-get install ros-kinetic-rosbridge-suite
+
+# 或使用源码安装
+$ git clone https://github.com/RobotWebTools/rosbridge_suite
+$ catkin_make
+```
+
+#### roslibjs, ros2djs, and ros3djs
+
+> 这几个 js 库文件是在网页端使用的 rosbridge 客户端
+>
+> roslibjs： (http://wiki.ros.org/roslibjs ), 可以用 js 实现一些基本的 ROS 方法 ，比如 ROS topics, services, actionlib, TF support, URDF 等
+>
+> The ros2djs (http://wiki.ros.org/ros2djs ) , 该库基于 roslibjs, 提供了 ROS 的 2 维可视化，可以使用它在浏览器中可视化 2维 地图
+>
+> ros3djs (http://wiki.ros.org/ros3djs ) ：可以在浏览器中可视化三维数据。比如：URDF, TF, interactive markers, and maps，可以创建一个基于 web 的 Rviz 实例
+
+下载这几个库文件，因为这几个库文件是网页端使用的，所以不需要想其他的 ROS 包一样，下载下来就可以了，不需要 catkin_make 编译
+
+```
+$ git clone https://github.com/RobotWebTools/roslibjs.git
+$ git clone https://github.com/RobotWebTools/ros2djs
+$ git clone https://github.com/RobotWebTools/ros3djs
+```
+
+roslibjs APIs: http://robotwebtools.org/jsdoc/roslibjs/current/ 
+
+ros2djs APIs: http://robotwebtools.org/jsdoc/ros2djs/current/
+
+ ros3djs APIs: http://robotwebtools.org/jsdoc/ros3djs/current/
+
+#### tf2_web_republisher
+
+安装
+
+```
+$ git clone https://github.com/RobotWebTools/tf2_web_republisher
+$ sudo apt-get install ros-kinetic-tf2-ros
+```
+
+####远程操控机器人并可视化（简单）
+
+结构：
+
+![](imgs/16.png)
+
+使用 keyboardteleopjs (http://wiki.ros.org/keyboardteleopjs ),根据按键发送消息
+
+代码展示
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+
+ <!--Ｊquery　相关库文件-->
+<link rel="stylesheet" type="text/css"
+  href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" />
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script>
+
+<!---->
+<script src="http://cdn.robotwebtools.org/threejs/current/three.js"></script>
+<script src="http://cdn.robotwebtools.org/threejs/current/ColladaLoader.js"></script>
+<script src="http://cdn.robotwebtools.org/threejs/current/STLLoader.js"></script>
+<script src="http://cdn.robotwebtools.org/ColladaAnimationCompress/current/ColladaLoader2.js"></script>
+
+<script src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+
+ <!--rosbridge 相关库文件-->
+<script src="http://cdn.robotwebtools.org/roslibjs/current/roslib.js"></script>
+<script src="http://cdn.robotwebtools.org/ros3djs/current/ros3d.min.js"></script>
+
+<!--keyboardteleop-->
+<script src="http://cdn.robotwebtools.org/keyboardteleopjs/current/keyboardteleop.js"></script>
+
+<script>
+  /**
+   * Setup all GUI elements when the page is loaded. 
+   */
+ var teleop_topic = '/cmd_vel_mux/input/teleop'
+ var base_frame = 'odom';
+ var init_flag = false;
+
+　function submit_values()　{
+  　teleop_topic = document.getElementById("tele_topic").value;
+  　base_frame = document.getElementById("base_frame_name").value;
+  　init_flag = true;
+ 　 init();
+　}
+
+  function init() {
+    if(init_flag == true)
+    {
+    // Connecting to ROS.
+    var ros = new ROSLIB.Ros({
+      url : 'ws://localhost:9090'
+    });
+    
+    // Initialize the teleop.
+    var teleop = new KEYBOARDTELEOP.Teleop({
+      ros : ros,
+      topic : teleop_topic
+    });
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+    var viewer = new ROS3D.Viewer({
+      background : 000,
+      divID : 'urdf',
+      width : 1280,
+      height : 600,
+      antialias : true
+    });
+ 
+    // Add a grid.
+    viewer.addObject(new ROS3D.Grid());
+
+    // Setup a client to listen to TFs.
+    var tfClient = new ROSLIB.TFClient({
+      ros : ros,
+      fixedFrame : base_frame,
+      angularThres : 0.01,
+      transThres : 0.01,
+      rate : 10.0
+    });
+
+    // Setup the URDF client.
+    var urdfClient = new ROS3D.UrdfClient({
+      ros : ros,
+      tfClient : tfClient,
+      path : 'http://resources.robotwebtools.org/',
+      rootObject : viewer.scene,
+      loader : ROS3D.COLLADA_LOADER
+    });
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // Create a UI slider using JQuery UI.
+    $('#speed-slider').slider({
+      range : 'min',
+      min : 0,
+      max : 100,
+      value : 90,
+      slide : function(event, ui) {
+        // Change the speed label.
+        $('#speed-label').html('Speed: ' + ui.value + '%');
+        // Scale the speed.
+        teleop.scale = (ui.value / 100.0);
+      }
+    });
+
+    // Set the initial speed .
+    $('#speed-label').html('Speed: ' + ($('#speed-slider').slider('value')) + '%');
+    	teleop.scale = ($('#speed-slider').slider('value') / 100.0);
+    	init_flag = false;
+  	}
+  }
+</script>
+</head>
+<body onload="init()">
+  <h1>Web-browser keyboard teleoperation</h1>
+　<form >
+  <!--主题-->
+  Teleop topic:<br>
+  <input type="text" name="Teleop Topic" id='tele_topic' value="/cmd_vel_mux/input/teleop">
+  <br>
+  
+  Base frame:<br>
+  <input type="text" name="Base frame" id='base_frame_name' value="/odom">
+  <br>
+
+ <input type="button" onmousedown="submit_values()" value="Submit"> 
+
+　</form> 
+  <p>Run the following commands in the terminal then refresh this page. Check the JavaScript console for the output.</p>
+  <ol>
+    <li><tt>roslaunch turtlebot_gazebo turtlebot_world.launch </tt></li>
+    <li><tt>roslaunch rosbridge_server rosbridge_websocket.launch</tt></li>
+    <li>Use your arrow keys on your keyboard to move the robot (must have this browser   window focused).</li>
+  </ol>
+  <div id="speed-label"></div>
+  <div id="speed-slider"></div>
+  <div id="urdf"></div>
+</body>
+</html>
+```
+
+启动
+
+> 很多的 js 不能用了，需要自己下载 
+
+```
+# 设置只在浏览器展示可视化界面
+$ rosparam set use_gui true
+
+# 打开模拟器
+$ roslaunch turtlebot3_gazebo turtlebot3_world.launch
+
+# 打开 tf2_web_republisher 结点
+$ rosrun tf2_web_republisher tf2_web_republisher
+
+# 打开 websocket 连接
+$ roslaunch rosbridge_server rosbridge_websocket.launch
+
+# 打开刚才建的页面
+$ google-chrome keyboardteleop.html
+```
+
+页面打开之后：
+
+![](imgs/15.png)
+
+点击 Submit，可以使用键盘控制机器人
+
+####通过浏览器控制机器人连接处
+
+结构图：
+
+![](imgs/17.png)
+
+安装 joint_state_publisher_js
+
+```
+# 下载包文件
+git clone https://github.com/DLu/joint_state_publisher_js
+
+# 编译
+catkin_make
+```
+
+> 在 build 目录下可以看到两个 js 文件
+
+![](imgs/18.png)
+
+代码
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+
+<script src="http://cdn.robotwebtools.org/threejs/current/three.min.js"></script>
+<script src="http://cdn.robotwebtools.org/ColladaAnimationCompress/current/ColladaLoader2.min.js"></script>
+<script src="http://cdn.robotwebtools.org/threejs/r61/STLLoader.min.js"></script>
+<script src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+<script src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+<script src="http://cdn.robotwebtools.org/ros3djs/current/ros3d.min.js"></script>
+<script src="../build/jointstatepublisher.js"></script>
+
+<script>
+  var topic;
+  /**
+   * Setup all visualization elements when the page is loaded.
+   */
+  function init() {
+    // Connect to ROS.
+    var ros = new ROSLIB.Ros({
+      url : 'ws://localhost:9090'
+    });
+
+    // Create the main viewer.
+    var viewer = new ROS3D.Viewer({
+      divID : 'urdf',
+      width : 1280,
+      height : 720,
+      antialias : true
+    });
+
+    // Add a grid.
+    viewer.addObject(new ROS3D.Grid());
+
+    // Setup a client to listen to TFs.
+    var tfClient = new ROSLIB.TFClient({
+      ros : ros,
+      angularThres : 0.01,
+      transThres : 0.01,
+      rate : 10.0,
+      fixedFrame : '/base_link'
+    });
+
+    // Setup the URDF client.
+    var urdfClient = new ROS3D.UrdfClient({
+      ros : ros,
+      tfClient : tfClient,
+      rootObject : viewer.scene,
+      path : 'http://resources.robotwebtools.org/'
+    });
+        
+    var jsp = new JOINTSTATEPUBLISHER.JointStatePublisher({
+        ros : ros,
+        divID : 'sliders'
+    });
+  }
+</script>
+</head>
+<body onload="init()">
+  <h1>Web based joint state controller for Robot</h1>
+  <p>Run the following commands in the terminal then refresh this page.</p>
+  <ol>
+    <li><tt>roslaunch pr2_description upload_pr2.launch </tt></li>
+    <li><tt>rosparam set use_gui true</tt></li>
+    <li><tt>roslaunch joint_state_publisher_js core.launch</tt></li>
+  </ol>
+  <div id="sliders" style="float: right"></div>
+  <div id="urdf"></div>
+</body>
+</html>
+```
+
+启动
+
+```
+# 安装 ros-kinetic-pr2-description
+$ sudo apt-get install ros-kinetic-pr2-description
+
+$ roslaunch pr2_description upload_pr2.launch
+$ rosparam set use_gui true
+$ roslaunch joint_state_publisher_js core.launch
+
+
+
+```
+
+#### 声控机器人的移动
+
+安装
+
+```
+$ sudo apt-get install apache2
+```
+
+启动
+
+```
+$ sudo cp -r speech_commands /var/www/html
+$ roslaunch turtlebot_gazebo turtlebot_world.launch
+$ roslaunch rosbridge_server rosbridge_websocket.launch
+```
+
+
+
+
+
 https://blog.csdn.net/u010853356/article/details/79226764

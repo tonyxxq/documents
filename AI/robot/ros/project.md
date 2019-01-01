@@ -1,57 +1,53 @@
 ## 人脸检测
 
-1. 结构图
+####结构图
 
-   ![](imgs/2.png)
+![](imgs/2.png)
 
-   2. 创建 ROS 包
+####创建 ROS 包
 
-      > mac 不能调用摄像头问题,解决方法： https://github.com/patjak/bcwc_pcie/wiki/Get-Started
-      >
-      > v4l-utils：实时从 webcam 抓取视频
-      >
-      > usb_cam：获取 v4l 的视频流，并且发布为 ROS 图像消息
+> mac 不能调用摄像头问题,解决方法： https://github.com/patjak/bcwc_pcie/wiki/Get-Started
+>
+> v4l-utils：实时从 webcam 抓取视频
+>
+> usb_cam：获取 v4l 的视频流，并且发布为 ROS 图像消息
 
-      ```
-      # 进入空间
-      $ cd ros_project_dependencies_ws/src/
+```
+# 进入空间
+$ cd ros_project_dependencies_ws/src/
 
-      # 下载包 web_cam，用于读取摄像头的图像，可以放到一个第三方包空间中
-      $ git clone https://github.com/bosch-ros-pkg/usb_cam.git
-      $ cd ros_project_dependencies_ws
-      $ catkin_make
+# 下载包 web_cam，用于读取摄像头的图像，可以放到一个第三方包空间中
+$ git clone https://github.com/bosch-ros-pkg/usb_cam.git
+$ cd ros_project_dependencies_ws
+$ catkin_make
 
-      # 安装 v4l-utils
-      sudo apt-get install v4l-utils
+# 安装 v4l-utils
+sudo apt-get install v4l-utils
 
-      # 创建 face_tracker_pkg 包
-      $ catkin_create_pkg face_tracker_pkg roscpp rospy cv_bridge dynamixel_controllers 	   message_generation
+# 创建 face_tracker_pkg 包
+$ catkin_create_pkg face_tracker_pkg roscpp rospy cv_bridge dynamixel_controllers 	   message_generation
 
-      # 创建 face_tracker_control 包
-      $ catkin_create_pkg face_tracker_control roscpp rospy std_msgs dynamixel_controllers message_generation
-      ```
+# 创建 face_tracker_control 包
+$ catkin_create_pkg face_tracker_control roscpp rospy std_msgs dynamixel_controllers message_generation
+```
 
-      > 1. opencv 通过 vision_opencv 这个包集成在 ROS 中，在安装 ROS（全部安装） 的时候就已经安装了，有两个包
-      >
-      >    cv_bridge：把 OpenCV  的图像类型转为 ROS 的图像消息( sensor_msgs/Image.msg )，或把摄像头获取的图像转换为 OpenCV 支持的类型
-      >
-      >    image_geometry：提供了一系列关于图像几何处理的方法
-      >
-      > 2. image_transport 
-      >
-      >    该包使用图像压缩技术减少传递的带宽，在安装 ROS（全部安装） 的时候就已经安装了
+> 1. opencv 通过 vision_opencv 这个包集成在 ROS 中，在安装 ROS（全部安装） 的时候就已经安装了，有两个包
+>
+>    cv_bridge：把 OpenCV  的图像类型转为 ROS 的图像消息( sensor_msgs/Image.msg )，或把摄像头获取的图像转换为 OpenCV 支持的类型
+>
+>    image_geometry：提供了一系列关于图像几何处理的方法
+>
+> 2. image_transport 
+>
+>    该包使用图像压缩技术减少传递的带宽，在安装 ROS（全部安装） 的时候就已经安装了
 
-   3. 编写 face_tracker_pkg
+1. 编写 face_tracker_pkg
 
-      ![](imgs/3.png)
+   ![](imgs/3.png)
 
-   包结构:
+包结构:
 
-   ![](imgs/4.png)
-
-   ​
-
-   ​
+![](imgs/4.png)
 
 face_tracker_node.cpp
 
@@ -688,11 +684,11 @@ if __name__ == '__main__':
 
 #### 使用 darknet_ros　
 
-# 安装
+安装
 
 https://github.com/leggedrobotics/darknet_ros
 
-##　使用　web 控制机器人
+##　使用 web 控制机器人
 
 ####rosbridge_suite
 
@@ -700,7 +696,7 @@ https://github.com/leggedrobotics/darknet_ros
 
 结构图：
 
-![![img](file:///home/tony/documents/AI/robot/ros/imgs/14.png?lastModify=1546255462)](imgs/14.png)
+![](imgs/14.png)
 
 > rosbridge_suite 包含下面三个包：
 >
@@ -1035,7 +1031,6 @@ $ rosparam set use_gui true
 $ roslaunch joint_state_publisher_js core.launch
 
 
-
 ```
 
 #### 声控机器人的移动
@@ -1115,12 +1110,12 @@ $ sudo apt-get install apache2
 </html>
 ```
 
-
-
 启动
 
 ```
+# 在 speech_commands 是前面编写的页面，在 apache2 可以直接访问
 $ sudo cp -r speech_commands /var/www/html
+
 $ roslaunch turtlebot_gazebo turtlebot_world.launch
 $ roslaunch rosbridge_server rosbridge_websocket.launch
 ```

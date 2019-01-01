@@ -688,6 +688,69 @@ if __name__ == '__main__':
 
 https://github.com/leggedrobotics/darknet_ros
 
+##　制作一个可以自动移动的机器人
+
+
+
+
+
+
+
+## 使用 VR 头盔和体感器远程操控机器人
+
+####安装 leap motion SDK 和 驱动
+
+1. 下载  leap motion SDK ( https://www.leapmotion.com/setup/linux )，下载得到两个 deb 文件
+
+2. 安装这两个驱动
+
+   ```
+   # 64 系统
+   $ sudo dpkg -install Leap-*-x64.deb
+
+   # 32 位系统
+   $ sudo dpkg -install Leap-*-x86.deb
+   ```
+
+####可视化 leap motion 数据
+
+ leap motion 插入 USB 接口，在终端执行 `dmesg`,  
+
+```
+# 判断是否连接成功
+$ dmesg
+
+#　打开控制面板 
+$ sudo LeapControlPanel
+
+# 只打开驱动
+$ sudo leapd
+
+＃ 重启驱动
+$ sudo service leapd stop
+
+# 启动 leap_motion 的 ros 驱动　
+$ roslaunch leap_motion sensor_sender.launch
+
+$ rostopic list
+$ rostopic echo /leapmotion/data
+
+# 启动可视化 ROS 可视化,订阅 leap_motion 的数据,把数据转换为 Rviz 支持的格式
+$ roslaunch leap_client leap_client.launch
+
+# 打开 rviz 选择 leap_client/launch/leap_client.rviz
+```
+
+
+
+
+
+
+
+
+
+#### 
+
 ##　使用 web 控制机器人
 
 ####rosbridge_suite

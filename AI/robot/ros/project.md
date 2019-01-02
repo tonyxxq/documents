@@ -3,7 +3,7 @@
 安装和启动
 
 ```apt-get install ros-kinetic-turtlebot-gazebo 
-$ apt-get install ros-kinetic-turtlebot-gazebo 
+$ apt-get install ros-kinetic-turtlebot-*
 
 # 启动模拟器
 $ roslaunch turtlebot_gazebo turtlebot_world.launch 

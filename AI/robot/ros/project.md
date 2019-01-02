@@ -1,3 +1,51 @@
+## 安装 gazebo 模拟器
+
+安装和启动
+
+```apt-get install ros-kinetic-turtlebot-gazebo 
+$ apt-get install ros-kinetic-turtlebot-gazebo 
+
+# 启动模拟器
+$ roslaunch turtlebot_gazebo turtlebot_world.launch 
+
+# 启动键盘控制（只能在终端界面用键盘控制turtlebot移动，无法在 Gazebo 界面控制）
+$ roslaunch turtlebot_teleop keyboard_teleop.launch
+
+# 观察摄像机采集的数据
+$ roslaunch turtlebot_rviz_launchers view_robot.launch
+```
+
+遇到的问题和解决办法
+
+1. 打开一直处于如下状态，进不去，原因是没下载 models
+
+   解决办法：
+
+   ``` cd  ~/.gazebo/
+   $ mkdir -p models
+   $ cd  ~/.gazebo/models/
+   $ wget http://file.ncnynl.com/ros/gazebo_models.txt
+   $ wget -i gazebo_models.txt
+   $ ls model.tar.g* | xargs -n1 tar xzvf
+   ```
+
+2. 错误：*Invalid tag: environment variable ‘TURTLEBOT_GAZEBO_WORLD_FILE’ is not set. Arg xml is arg default=”$(env TURTLEBOT_GAZEBO_WORLD_FILE)” name=”world_file”The traceback for the exception was written to the log file.*
+
+   解决方法：重新配置环境
+
+   ```
+   $ sudo rosdep init
+   $ rosdep update
+   $ echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
+   ```
+
+   $ source ~/.bashrc
+   --------------------- 
+   作者：GJXS2017 
+   来源：CSDN 
+   原文：https://blog.csdn.net/GJXS2017/article/details/80198346 
+   版权声明：本文为博主原创文章，转载请附上博文链接！
+
 ## 人脸检测
 
 ####结构图
@@ -1092,8 +1140,6 @@ $ sudo apt-get install ros-kinetic-pr2-description
 $ roslaunch pr2_description upload_pr2.launch
 $ rosparam set use_gui true
 $ roslaunch joint_state_publisher_js core.launch
-
-
 ```
 
 #### 声控机器人的移动

@@ -37,14 +37,9 @@ $ roslaunch turtlebot_rviz_launchers view_robot.launch
    $ sudo rosdep init
    $ rosdep update
    $ echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc
+   $ source ~/.bashrc
    ```
 
-   $ source ~/.bashrc
-   --------------------- 
-   作者：GJXS2017 
-   来源：CSDN 
-   原文：https://blog.csdn.net/GJXS2017/article/details/80198346 
-   版权声明：本文为博主原创文章，转载请附上博文链接！
 
 ## 人脸检测
 
@@ -585,8 +580,6 @@ $ git clone https://github.com/wg-perception/ork_tutorials
 
 # 
 ```
-
-
 
 ## ROS 和深度学习的集成
 
@@ -1228,8 +1221,6 @@ $ sudo cp -r speech_commands /var/www/html
 $ roslaunch turtlebot_gazebo turtlebot_world.launch
 $ roslaunch rosbridge_server rosbridge_websocket.launch
 ```
-
-
 
 
 

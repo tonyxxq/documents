@@ -668,6 +668,16 @@
   $ rosbag record -O subset /turtle1/command_velocity /turtle1/pose
   ```
 
+- 发布 ros 包
+
+  http://carlzhang.club/2018/04/22/releaseros1-into-rosdistro/
+
+  http://carlzhang.club/2018/04/25/releaseros2-into-rosdistro/
+
+  https://blog.csdn.net/u011118482/article/details/83244285
+
+
+
 
 
 参考：http://wiki.ros.org

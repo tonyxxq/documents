@@ -14,10 +14,10 @@
   ```
   $ echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
   $ source ~/.bashrc
-  
+
   # 查看环境变量是否配置正确
   $ export | grep ros
-  
+
   # 程序首次编译（catkin_make）之后需要添加环境变量才能找到各个包的位置
   $ source devel/setup.sh
   ```
@@ -27,22 +27,22 @@
   ```
   # 开启主要进程
   $ roscore
-  
-  # 查看所有作为全局变量包的路径
+
+  # 查看所有作为全局变量包的路径,只有在此环境变量路径下的包才能被发现
   echo $ROS_PACKAGE_PATH
-  
+
   # 查找包信息 
   rospack find [包名称]
-  
+
   # 切换到指定包目录（可以添加子目录）下
   roscd [本地包名称[/子目录]]
-  
+
   # ros 日志文件的目录
   $ roscd log
-  
+
   # rosls，列出指定包（或子目录）下的文件和文件夹
   rosls [本地包名称[/子目录]]
-  
+
   # roscp 文件复制
   $ roscp rospy_tutorials AddTwoInts.srv srv/AddTwoInts.srv
   ```
@@ -55,15 +55,15 @@
   $ catkin_init_workspace
   $ ls -l
   $ cd ~/catkin_ws
-  
+
   # 默认会编译在当前目录下的 src 文件夹下的包，也可以指定源码的路径 catkin_make --source my_src
   $ catkin_make
   # 如果之前编译过，但是后来加入了新包，可以添加 --force-cmake 把新包加入到已编译过的二进制文件
   $ catkin_make --force-cmake
-  
+
   # 安装
   catkin_make install 或 catkin_make install --source my_src
-  
+
   $ ls
   ```
 
@@ -77,13 +77,13 @@
 
   ```
   $ cd ~/catkin_ws/src
-  
+
   ＃ 创建包，且添加 std_msgs rospy roscpp 两个依赖
   $ catkin_create_pkg first_package std_msgs rospy roscpp
-  
+
   # 一级依赖， 即上面创建包时填写的参数 std_msgs rospy roscpp，（一级依赖）
   $ rospack depends1 beginner_tutorials 
-  
+
   # 所有依赖，会递归查询出 beginner_tutorials 及其依赖包的所有依赖
   $ rospack depends beginner_tutorials
   ```
@@ -93,21 +93,21 @@
   ```xml
   <!--该程序包的描述-->
   <description>The beginner_tutorials package</description>
-  
+
   <!--维护者标签-->
   <maintainer email="user@todo.todo">user</maintainer>
-  
+
   <!--许可-->
   <license>BSD</license>
-  
+
   <!--构建工具-->
   <buildtool_depend>catkin</buildtool_depend>
-  
+
   <!--编译依赖-->
   <build_depend>roscpp</build_depend>
   <build_depend>rospy</build_depend>
   <build_depend>std_msgs</build_depend>
-  
+
   <!--运行依赖-->
   <exec_depend>roscpp</exec_depend>
   <exec_depend>rospy</exec_depend>
@@ -141,17 +141,17 @@
   ```
   # 查看所有结点
   $ rosnode list
-  
+
   # 查看特定节点
   $ rosnode info /rosout
-  
+
   # 运行节点, 第一个参数是包名，第二个参数是结点名
   rosrun turtlesim turtlesim_node
   rosrun turtlesim turtle_teleop_key
-  
+
   # 测试 节点是否连接通
   rosnode ping turtlesim_node
-  
+
   # 清除所有节点
   rosnode cleanup
   ```
@@ -172,29 +172,29 @@
   ```
   # 列出所有的主题
   rostopic list
-  
+
   # 查看指定主题的消息类型
   rostopic type /turtlel/cmd_vel
-  
+
   # 查询具体的某个主题
   rostopic info /turtlel/cmd_vel
-  
+
   # 会自动新建一个节点，订阅指定话题，当有消息接收的时候，把数据打印到页面上
   rostopic echo /turtle1/command_velocity
-  
+
   # 查看主题图
   rosrun rqt_graph rqt_graph
-  
+
   # 查看主题传送的消息类型
   rostopic type /turtle1/command_velocity
-  
+
   # 发送消息到指定主题, -1 表示发布消息后马上退出，--：表示接下来的是参数
   # 这条命令只发布了一条消息就退出了
   $ rostopic pub -1 /turtle1/command_velocity turtlesim/Velocity  -- 2.0  1.8
-  
+
   # 发布稳定的消息流，且按照指定的频率， -r 1表示频率为 1， 即 1 秒发送一条消息
   $ rostopic pub /turtle1/command_velocity turtlesim/Velocity -r 1  -- 2.0  -1.8
-  
+
   # 查看某个主题消息发布的频率
   $ rostopic hz /turtle1/pose
   ```
@@ -232,14 +232,14 @@
   ```
   # 创建消息类型，如下 Num.msg 只创建了一行数据，可以创建多行
   $ echo "int64 num" > msg/Num.msg行
-  
+
   # 在 package.xml 中添加如下两行，为了确保 msg 文件被转换成为C++，Python和其他语言的源代码
   <build_depend>message_generation</build_depend>
   <run_depend>message_runtime</run_depend>
-  
+
   # 在 CMakeLists.txt 文件中，利用find_packag函数，增加对message_generation的依赖
   find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs message_generation)
-  
+
   # 添加运行依赖
   catkin_package(
     ...
@@ -251,13 +251,13 @@
     FILES
     Num.msg
   )
-  
+
   # 查看消息的具体信息，前面的包名可以省略
   $ resmsg info geometry_msgs/Twist
-  
+
   # 查看消息格式，前面的包名可以省略
   $ resmsg show geometry_msgs/Twist
-  
+
   # 编辑消息格式
   $ rosed geometry_msgs Twist.msg
   ```
@@ -388,10 +388,10 @@
   ```
   # 检查包中缺失的依赖
   rosdep check simple_arm
-  
+
   # 安装包中缺失的依赖
   rosdep install -i simple_arm
-  
+
   # 或使用 apt-get 安装
   sudo apt-get install ros-kinetic-gazebo-ros-control
   ```
@@ -425,13 +425,13 @@
   ```
   # 创建或复制一个文件
   $ roscp rospy_tutorials AddTwoInts.srv srv/AddTwoInts.srv
-  
+
   # 其他跟 message 一致修改package.xml 和 CmakeLists.txt（不一样的是在 add_service_files 下添加文件名称）
-  
+
   # 查看服务类型，可以不指定包名
   $ rossrv show beginner_tutorials/AddTwoInts
   $ rossrv info beginner_tutorials/AddTwoInts
-  
+
   # 修改文件
   $ rosed beginner_tutorials AddTwoInts.srv
   ```
@@ -460,23 +460,23 @@
   >
   >    ```c++
   >    ros::init(argc, argv, "param_demo");
-  >    
+  >
   >    // n 使用的是全局空间，pn 使用的是 ~my_namespce 空间
   >    // 所以 “string_param” 是全局的参数，“int_param” 是在命名空间 my_namespace下的参数
   >    ros::NodeHandle n;
   >    ros::NodeHandle pn("~my_namespce");
-  >    
+  >
   >    td::string s;
   >    int num;
-  >    
+  >
   >    // 初始化参数值
   >    n.param<std::string>("string_param", s, "haha");
   >    pn.param<int>("int_param", num, 666);
-  >    
+  >
   >    // 输出被初始化后的变量值
   >    ROS_INFO("string_param_init: %s", s.c_str());
   >    ROS_INFO("int_param_init: %d", num);
-  >    
+  >
   >    // 设置参数的值
   >    n.setParam("string_param", "hehe");
   >    pn.setParam("int_param", 222);
@@ -493,7 +493,7 @@
   ```
   # 启动 rqt_console
   $ rosrun rqt_console rqt_console
-  
+
   # 启动 rqt_logger_lev
   $ rosrun rqt_logger_level rqt_logger_level
   ```
@@ -507,7 +507,7 @@
   # license removed for brevity
   import rospy
   from std_msgs.msg import String
-  
+
   def talker():
       # 创建发布者
       pub = rospy.Publisher('chatter', String, queue_size=10)
@@ -528,7 +528,7 @@
           pub.publish(hello_str)
           # 根据频率进行睡眠
           rate.sleep()
-  
+
   if __name__ == '__main__':
       try:
           talker()
@@ -547,7 +547,7 @@
   #!/usr/bin/env python
   import rospy
   from std_msgs.msg import String
-  
+
   def callback(data):
       # 输出消息到屏幕 和 rosout 
       rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
@@ -560,13 +560,13 @@
       # run simultaneously.
       # 注册 listener 节点
       rospy.init_node('listener', anonymous=True)
-  
+
   	# 订阅 chatter 节点
       rospy.Subscriber("chatter", String, callback)
-  
+
       # spin() simply keeps python from exiting until this node is stopped
       rospy.spin()
-  
+
   if __name__ == '__main__':
       listener()
   ```
@@ -590,20 +590,20 @@
 
   ```python
   #!/usr/bin/env python
-  
+
   from beginner_tutorials.srv import *
   import rospy
-  
+
   def handle_add_two_ints(req):
       print "Returning [%s + %s = %s]"%(req.a, req.b, (req.a + req.b))
       return AddTwoIntsResponse(req.a + req.b)
-  
+
   def add_two_ints_server():
       rospy.init_node('add_two_ints_server')
       s = rospy.Service('add_two_ints', AddTwoInts, handle_add_two_ints)
       print "Ready to add two ints."
       rospy.spin()
-  
+
   if __name__ == "__main__":
       add_two_ints_server()
   ```
@@ -612,11 +612,11 @@
 
   ```python
   #!/usr/bin/env python
-  
+
   import sys
   import rospy
   from beginner_tutorials.srv import *
-  
+
   def add_two_ints_client(x, y):
       rospy.wait_for_service('add_two_ints')
       try:
@@ -625,10 +625,10 @@
           return resp1.sum
       except rospy.ServiceException, e:
           print "Service call failed: %s"%e
-  
+
   def usage():
       return "%s [x y]"%sys.argv[0]
-  
+
   if __name__ == "__main__":
       if len(sys.argv) == 3:
           x = int(sys.argv[1])
@@ -653,13 +653,13 @@
   ```
   $ mkdir ~/bagfiles
   $ cd ~/bagfiles
-  
+
   # -a 表示所有话题数据都录制
   $ rosbag record -a
-  
+
   # 查看录制数据的描述信息
   $ rosbag info <your bagfile>
-  
+
   # 回放， -r 2 表示以两倍速率回放
   $ rosbag play -r 2 <your bagfile>
   ec
@@ -676,6 +676,9 @@
 
   https://blog.csdn.net/u011118482/article/details/83244285
 
+- 创建 3D 机器人模型
+
+  urdf
 
 
 

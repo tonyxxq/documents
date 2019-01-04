@@ -29,3 +29,15 @@ npm config set registry https://registry.npm.taobao.org
 npm config get registry
 ```
 
+快速启动本地服务
+
+```
+# 安装 browser-sync
+# cnpm install -g browser-sync
+
+# 启动
+# browser-sync start -server
+```
+
+
+

@@ -670,7 +670,6 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.models.image.imagenet import classify_image
 
-
 class RosTensorFlow():
     def __init__(self):
         # 下载tensorflow 模型，下载地址为 /tmp/imagenet

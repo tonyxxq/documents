@@ -38,7 +38,7 @@
   ```python
   app_width = 800
   app_height = 600
-  
+
   pointable = frame.pointables.frontmost
   if pointable.is_valid:
       # 获取 interaction_box
@@ -68,18 +68,17 @@
 
   参考：https://blog.csdn.net/qq_27582707/article/details/50896459
 
-  操作画布：
+  例子，操作画布：
 
   ```js
   <canvas id="displayArea" width="200" height="100" style="background:#dddddd;"></canvas>
   <script>
   var canvasElement = document.getElementById("displayArea");
   var displayArea = canvasElement.getContext("2d");
-  
+
   var controller = new Leap.Controller();
   controller.on("frame", function(frame){
-      if(frame.pointables.length > 0)
-      {
+      if(frame.pointables.length > 0) {
           canvasElement.width = canvasElement.width; //clear
           
           //Get a pointable and normalize the tip position

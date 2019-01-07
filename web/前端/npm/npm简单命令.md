@@ -1,4 +1,28 @@
-npm的一下简单命令：
+####安装 node：
+
+```
+$ sudo mkdir /usr/local/node
+$ cd /usr/local/node
+$ sudo wget https://npm.taobao.org/mirrors/node/v10.15.0/node-v10.15.0-linux-x64.tar.gz
+$ sudo tar -zxvf node-v10.15.0-linux-x64.tar.gz
+$ sudo rm -rf node-v10.15.0-linux-x64.tar.gz
+$ sudo ln -s /usr/local/node/node-v10.15.0-linux-x64/bin/npm /usr/local/bin/npm
+$ sudo ln -s /usr/local/node/node-v10.15.0-linux-x64/bin/node /usr/local/bin/node
+
+# 测试一下是否安装成功
+$ npm -v
+```
+
+安装 cnpm:
+
+```
+$ npm install -g cnpm --registry=https://registry.npm.taobao.org
+
+# 创建软连接
+sudo ln -s /usr/local/node/node-v10.15.0-linux-x64/bin/cnpm /usr/local/bin/
+```
+
+####npm 简单命令：
 
 ```
 # 安装包，如果node_modules有包不需要更新，即使远程仓库有新包

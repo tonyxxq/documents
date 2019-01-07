@@ -1,10 +1,6 @@
  Vue两大核心思想，组件化和数据驱动。
 
-​	
-
-1. 使用npm全局安装vue-cli
-
-   github地址：[](https://github.com/vuejs/vue-cli)
+1. 使用npm全局安装vue-cli，github地址：ttps://github.com/vuejs/vue-cli
 
    ```
    npm install --global vue-cli
@@ -15,6 +11,7 @@
    ```
    # 第一个参数表示使用模板的名称，第二个表示创建的项目名称
    vue init webpack vuetest
+
    # 如果要查看官方有哪些指定的模板文件
    vue list
    ```
@@ -59,19 +56,17 @@
    cnpm install --production
    ```
 
-   ​
-
 7. 项目打包
 
    ```
    npm run build
    ```
 
-8. 打包完成之后还不能立即访问，需要设置config\index.js文件下的build对象，将assetsPublicPath得/改为./
+8. 打包完成之后还不能立即访问，需要设置config\index.js文件下的build对象，将　assetsPublicPath　得/改为./
 
 9. 这样就可以访问了http://localhost:8080
 
-   ![](F:\我的\web\vue\imgs\1.jpg)
+   ![](imgs\1.jpg)
 
    ​
 

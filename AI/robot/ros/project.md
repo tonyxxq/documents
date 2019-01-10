@@ -769,15 +769,7 @@ $ sudo leapd
 ＃ 重启驱动
 $ sudo service leapd stop
 
-<<<<<<< HEAD
-# 安装 leap_motion 的 ros 结点　
-$ git clone https://github.com/ros-drivers/leap_motion
-$ export LEAP_SDK=$LEAP_SDK:$HOME/LeapSDK
-$ export PYTHONPATH=$PYTHONPATH:$HOME/LeapSDK/lib:$HOME/LeapSDK/lib/x64
-$ sudo cp $LEAP_SDK/lib/x64/libLeap.so /usr/local/lib
-
 # 启动 leap_motion 的 ros 结点
-=======
 # 配置开发环境 SDK 环境变量，下载是把 SDK 放到了 home 路径下可以换为别的地方
 $ export LEAP_SDK=$LEAP_SDK:$HOME/LeapSDK
 $ export PYTHONPATH=$PYTHONPATH:$HOME/LeapSDK/lib:$HOME/LeapSDK/lib/x64
@@ -789,7 +781,6 @@ $ git clone https://github.com/ros-drivers/leap_motion
 $ catkin_make install --pkg leap_motion
 
 # 启动 leap_motion 的 ros 节点　
->>>>>>> 33cda17f2507d6e986da89348e2f5c468e38592a
 $ roslaunch leap_motion sensor_sender.launch
 
 # 查看 sensor_sender 节点发布的数据
@@ -806,7 +797,7 @@ $ roslaunch rviz rviz
 
 ####使用手势控制机器人
 
-> |          手势           |    机器人移动方向    |
+> |           手势            |       机器人移动方向        |
 > | :---------------------: | :------------------: |
 > |     Hand pitch low      |     Move forward     |
 > |     Hand pitch high     |    Move backward     |

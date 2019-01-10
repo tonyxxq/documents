@@ -778,7 +778,7 @@ $ roslaunch turtlebot_rviz_launchers view_navigation.launch
 
 ![](imgs/25.png)
 
-导航过程
+导航过程　
 
 ![](imgs/24.png)
 

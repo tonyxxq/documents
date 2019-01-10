@@ -568,6 +568,10 @@ $ roslaunch openni_launch openni.launch depth_registration:=true
 $ roslaunch find_object_2d find_object_3d.launch
 ```
 
+![](imgs/20.png)
+
+![](imgs/21.png)
+
 ####  3D 物体识别， Object Recognition Kitchen ( ORK)
 
 安装：
@@ -647,7 +651,7 @@ $ roscore
 # 开启摄像头
 $ rosrun cv_camera cv_camera_node
 
-# 执行图像识别，设置图像输入
+# 执行图像识别（执行过程中会先进行下载），设置图像输入
 $ python image_recognition.py image:=/cv_camera/image_raw
 
 # 识别出的物体通过 /result 主题进行输出 
@@ -657,6 +661,10 @@ $ rostopic echo /result
 # sudo apt-get install ros-kinetic-image-view
 $ rosrun image_view image_view image:= /cv_camera/image_raw
 ```
+
+识别出的结果：
+
+![](imgs/22.png)
 
 image_recognition.py 代码：
 
@@ -730,11 +738,49 @@ https://github.com/leggedrobotics/darknet_ros
 
 ##　制作一个可以自动移动的机器人
 
+#### 地图构建
 
+```
+＃ 打开模拟器
+$　roslaunch turtlebot_gazebo turtlebot_world.launch
 
+# 打开键盘控制
+$ roslaunch turtlebot_teleop keyboard_teleop.launch 
 
+# 打开 gmaping
+$ roslaunch turtlebot_gazebo gmapping_demo.launch
 
+# 可视化构图过程
+$ roslaunch turtlebot_rviz_launchers view_navigation.launch
 
+# 保存地图，在 home 目录下会产生两个文件 turtlebot_world.pgm, turtlebot_world.yaml
+$ rosrun map_server map_saver -f ~/turtlebot_world
+```
+
+移动机器人，在 rviz　中可以看到构建的地图
+
+![](imgs/23.png)
+
+#### 导航与定位
+
+```
+＃ 打开模拟器
+$　roslaunch turtlebot_gazebo turtlebot_world.launch
+
+# 使用刚才建立的地图进行导航
+$ roslaunch turtlebot_gazebo amcl_demo.launch map_file:=/home/tony/turtlebot_world.yaml
+
+# 可视化导航过程
+$ roslaunch turtlebot_rviz_launchers view_navigation.launch
+```
+
+点击　rvize 顶部菜单栏的　2D Nav Goal ，并在地图中选择目的地，机器人会自动导航到对应地点
+
+![](imgs/25.png)
+
+导航过程
+
+![](imgs/24.png)
 
 ## 使用 VR 头盔和体感器远程操控机器人
 
@@ -792,7 +838,7 @@ $ git clone https://github.com/qboticslabs/leap_client
 $ catkin_make
 $ roslaunch leap_client leap_client.launch
 # 打开 rviz 选择 leap_client/launch/leap_client.rviz
-$ roslaunch rviz rviz
+$ rosrun rviz rviz
 ```
 
 ####使用手势控制机器人

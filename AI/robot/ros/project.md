@@ -740,7 +740,7 @@ https://github.com/leggedrobotics/darknet_ros
 
 ####安装 leap motion SDK 和 驱动
 
-1. 下载  leap motion SDK ( https://www.leapmotion.com/setup/linux )，下载得到两个 deb 文件
+1. 下载  leap motion SDK ( https://www.leapmotion.com/setup/linux )，在下载文件中有驱动信息 和 SDK
 
 2. 安装驱动
 
@@ -754,13 +754,13 @@ https://github.com/leggedrobotics/darknet_ros
 
 ####可视化 leap motion 数据
 
- leap motion 插入 USB 接口，在终端执行 `dmesg`,  
+ leap motion 插入 USB 接口
 
 ```
 # 判断是否连接成功
 $ dmesg
 
-#　打开控制面板 
+#　打开控制面板
 $ sudo LeapControlPanel
 
 # 打开驱动
@@ -769,6 +769,7 @@ $ sudo leapd
 ＃ 重启驱动
 $ sudo service leapd stop
 
+<<<<<<< HEAD
 # 安装 leap_motion 的 ros 结点　
 $ git clone https://github.com/ros-drivers/leap_motion
 $ export LEAP_SDK=$LEAP_SDK:$HOME/LeapSDK
@@ -776,26 +777,140 @@ $ export PYTHONPATH=$PYTHONPATH:$HOME/LeapSDK/lib:$HOME/LeapSDK/lib/x64
 $ sudo cp $LEAP_SDK/lib/x64/libLeap.so /usr/local/lib
 
 # 启动 leap_motion 的 ros 结点
+=======
+# 配置开发环境 SDK 环境变量，下载是把 SDK 放到了 home 路径下可以换为别的地方
+$ export LEAP_SDK=$LEAP_SDK:$HOME/LeapSDK
+$ export PYTHONPATH=$PYTHONPATH:$HOME/LeapSDK/lib:$HOME/LeapSDK/lib/x64
+$ sudo cp $LEAP_SDK/lib/x64/libLeap.so /usr/local/lib
+$ sudo ldconfig
+
+# 下载并编译 leap_motion 包
+$ git clone https://github.com/ros-drivers/leap_motion
+$ catkin_make install --pkg leap_motion
+
+# 启动 leap_motion 的 ros 节点　
+>>>>>>> 33cda17f2507d6e986da89348e2f5c468e38592a
 $ roslaunch leap_motion sensor_sender.launch
 
-$ rostopic list
+# 查看 sensor_sender 节点发布的数据
 $ rostopic echo /leapmotion/data
 
-# 启动可视化 ROS 可视化,订阅 leap_motion 的数据,把数据转换为 Rviz 支持的格式
+# 启动 ROS 可视化，订阅 leap_motion 的数据，把数据转换为 Rviz 支持的格式（在16.04上没有测试成功）
+$ export LEAPSDK=$LEAPSDK:$HOME/LeapSDK
+$ git clone https://github.com/qboticslabs/leap_client
+$ catkin_make
 $ roslaunch leap_client leap_client.launch
-
 # 打开 rviz 选择 leap_client/launch/leap_client.rviz
+$ roslaunch rviz rviz
+```
+
+####使用手势控制机器人
+
+> |          手势           |    机器人移动方向    |
+> | :---------------------: | :------------------: |
+> |     Hand pitch low      |     Move forward     |
+> |     Hand pitch high     |    Move backward     |
+> | Hand roll anticlockwise | Rotate anticlockwise |
+> |   Hand roll clockwise   |   Rotate clockwise   |
+
+```python
+!/usr/bin/env python
+import rospy
+from leap_motion.msg import leap
+from leap_motion.msg import leapros
+from geometry_msgs.msg import Twist
+
+# 主题的发布地址
+teleop_topic = '/cmd_vel_mux/input/teleop'
+
+# 机器人速度、转向和手的俯仰角和翻滚交的限制
+low_speed = -0.5
+stop_speed = 0
+high_speed = 0.5
+low_turn = -0.5
+stop_turn = 0
+high_turn = 0.5
+
+pitch_low_range = -30
+pitch_high_range = 30
+roll_low_range = -150
+roll_high_range = 150
+
+def callback_ros(data):
+    global pub
+    msg = leapros()
+    msg = data
+    yaw = msg.ypr.x
+    pitch = msg.ypr.y
+    roll = msg.ypr.z
+    twist = Twist()
+    twist.linear.x = 0; twist.linear.y = 0; twist.linear.z = 0
+    twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = 0
+
+	# 指定范围内的才能检测到手势，pitch 在(-30, 0) Pitch high， (30, 60) Pitch low
+    if(pitch > pitch_low_range and pitch < pitch_low_range + 30):
+	    twist.linear.x = high_speed; twist.linear.y = 0; twist.linear.z = 0
+	    twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = 0
+        rospy.loginfo("Pitch high")
+    elif(pitch > pitch_high_range and pitch < pitch_high_range + 30):
+	    twist.linear.x = low_speed; twist.linear.y = 0; twist.linear.z = 0
+	    twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = 0
+        rospy.loginfo("Pitch low")
+    
+    if(roll > roll_low_range and roll < roll_low_range + 30):
+	    twist.linear.x = 0; twist.linear.y = 0; twist.linear.z = 0
+	    twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = high_turn
+        rospy.loginfo("Roll left")
+    elif(roll > roll_high_range and roll < roll_high_range + 30):
+	    twist.linear.x = 0; twist.linear.y = 0; twist.linear.z = 0
+	    twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = low_turn
+        rospy.loginfo("Roll right")
+    
+    pub.publish(twist)
+    #rospy.loginfo(rospy.get_name() + ": Roll %s" % msg.ypr.x)
+    #rospy.loginfo("\n")
+    rospy.loginfo(rospy.get_name() + ": Pitch %s" % msg.ypr.y)
+    #rospy.loginfo("\n")
+    #rospy.loginfo(rospy.get_name() + ": Yaw %s" % msg.ypr.z)
+    #rospy.loginfo("\n")
+
+# 订阅 leapmotion/data 主题，发布到 /cmd_vel_mux/input/teleop 主题
+def listener():
+    global pub
+    rospy.init_node('leap_sub', anonymous=True)
+    rospy.Subscriber("leapmotion/data", leapros, callback_ros)
+    pub = rospy.Publisher(teleop_topic, Twist, queue_size=1)
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()
+```
+
+把机器人模拟器观察到的数据在 Android 中显示
+
+```
+# 查看本地的 IP
+$ ifconfig
+
+# 添加环境变量
+$ export ROS_IP=192.168.1.101
+
+# 打开 Android app 填入PC 端的 IP 地址，进行连接
+
+# 安装 usb_cam 包，执行
+$ roslaunch usb_cam usb_cam-test.launch
+
+# remap 主题信息，因为 App 订阅需要的主题是 /camera/image/compressed
+$ rosrun topic_tools relay /usb_cam/image_raw/compressed /camera/image/compressed
+
+# 启动模拟器
+$ roslaunch turtlebot_gazebo turtlebot_playground.launch
+
+# 把模拟器的观察图像发送到手机订阅的主题
+$ rosrun topic_tools relay /camera/rgb/image_raw/compressed /usb_cam/image_raw/compressed
 ```
 
 
-
-
-
-
-
-
-
-#### 
 
 ##　使用 web 控制机器人
 

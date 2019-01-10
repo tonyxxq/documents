@@ -742,7 +742,7 @@ https://github.com/leggedrobotics/darknet_ros
 
 1. 下载  leap motion SDK ( https://www.leapmotion.com/setup/linux )，下载得到两个 deb 文件
 
-2. 安装这两个驱动
+2. 安装驱动
 
    ```
    # 64 系统
@@ -763,13 +763,19 @@ $ dmesg
 #　打开控制面板 
 $ sudo LeapControlPanel
 
-# 只打开驱动
+# 打开驱动
 $ sudo leapd
 
 ＃ 重启驱动
 $ sudo service leapd stop
 
-# 启动 leap_motion 的 ros 驱动　
+# 安装 leap_motion 的 ros 结点　
+$ git clone https://github.com/ros-drivers/leap_motion
+$ export LEAP_SDK=$LEAP_SDK:$HOME/LeapSDK
+$ export PYTHONPATH=$PYTHONPATH:$HOME/LeapSDK/lib:$HOME/LeapSDK/lib/x64
+$ sudo cp $LEAP_SDK/lib/x64/libLeap.so /usr/local/lib
+
+# 启动 leap_motion 的 ros 结点
 $ roslaunch leap_motion sensor_sender.launch
 
 $ rostopic list

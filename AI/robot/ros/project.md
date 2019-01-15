@@ -722,13 +722,40 @@ if __name__ == '__main__':
 
 很遗憾的是上面的识别任务只能识别出图像的物体，并没有标出物体的位置。
 
-#### 使用 darknet_ros　
+#### 使用 darknet_ros
 
 安装
 
 https://github.com/leggedrobotics/darknet_ros
 
 ##　制作一个可以自动移动的机器人
+
+
+
+#### 地图和定位
+
+
+
+
+
+####使用 Android 控制机器人
+
+安装 rosjava
+
+```
+# 安装 rosjava 使用包管理工具
+$ sudo apt-get install ros-<rosversion_name>-rosjava
+
+# 或安装 rosjava 从源码安装
+$ mkdir -p ~/rosjava/src
+$ wstool init -j4 ~/rosjava/src https://raw.githubusercontent.com/rosjava/rosjava/indigo/rosjava.rosinsta
+```
+
+
+
+
+
+
 
 
 

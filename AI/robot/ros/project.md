@@ -680,13 +680,14 @@ from tensorflow.models.image.imagenet import classify_image
 
 class RosTensorFlow():
     def __init__(self):
-        # 下载tensorflow 模型，下载地址为 /tmp/imagenet
+        # 下载tensorflow 模型，下载到地址 /tmp/imagenet
         classify_image.maybe_download_and_extract()
         
         self._session = tf.Session()
         classify_image.create_graph()
         self._cv_bridge = CvBridge()
 
+        # 订阅和发布
         self._sub = rospy.Subscriber('image', Image, self.callback, queue_size=1)
         self._pub = rospy.Publisher('result', String, queue_size=1)
         

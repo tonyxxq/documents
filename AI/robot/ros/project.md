@@ -731,7 +731,7 @@ if __name__ == '__main__':
 
 很遗憾的是上面的识别任务只能识别出图像的物体，并没有标出物体的位置。
 
-#### 使用 darknet_ros　
+#### 使用 darknet_ros
 
 安装
 
@@ -764,16 +764,6 @@ $ rosrun map_server map_saver -f ~/turtlebot_world
 
 #### 导航与定位
 
-```
-＃ 打开模拟器
-$　roslaunch turtlebot_gazebo turtlebot_world.launch
-
-# 使用刚才建立的地图进行导航
-$ roslaunch turtlebot_gazebo amcl_demo.launch map_file:=/home/tony/turtlebot_world.yaml
-
-# 可视化导航过程
-$ roslaunch turtlebot_rviz_launchers view_navigation.launch
-```
 
 点击　rvize 顶部菜单栏的　2D Nav Goal ，并在地图中选择目的地，机器人会自动导航到对应地点
 
@@ -782,6 +772,245 @@ $ roslaunch turtlebot_rviz_launchers view_navigation.launch
 导航过程　
 
 ![](imgs/24.png)
+
+#### 使用 Android 控制机器人
+
+安装 rosjava
+
+```
+# 安装 rosjava 使用包管理工具
+$ sudo apt-get install ros-<rosversion_name>-rosjava
+
+# 或安装 rosjava 从源码安装
+$ mkdir -p ~/rosjava/src
+$ wstool init -j4 ~/rosjava/src https://raw.githubusercontent.com/rosjava/rosjava/indigo/rosjava.rosinsta
+```
+
+#### Velodyne LIDAR
+
+安装和测试 Velodyne LIDAR 模拟器
+
+```
+# 安装模拟器
+$ sudo apt-get install ros-kinetic-velodyne-simulator
+
+# 或从源码安装, catkin_make
+$ git clone https://bitbucket.org/DataspeedInc/velodyne_simulator.git
+
+# 启动模拟器，需要消耗不少内存，电脑内存应该在 8G 以上
+$ roslaunch velodyne_description example.launch
+```
+
+安装真实的 Velodyne  LIDAR 驱动器和转换器
+
+```
+# 安装 LIDAR 的 ros 包（包括驱动和转换器）
+$ sudo apt-get install ros-kinetic-velodyne
+
+# 启动驱动器，指定 LIDAR 的类型 HDL-64E, HDL-32E,and VLP-16
+$ roslaunch velodyne_driver nodelet_manager.launch model:=32E
+
+# 启动转换器，把 Velodyne 消息 (velodyne_msgs/VelodyneScan) 转换为点云消息
+# (sensor_msgs/PointCloud2), 其中矫正文件在 velodyne_pointcloud 包中
+$ roslaunch velodyne_pointcloud cloud_nodelet.launch calibration:=~/calibration_file.yaml
+```
+
+同时启动驱动器和转换器
+
+```xml
+<launch>
+	<!-- start nodelet manager and driver nodelets -->
+	<include file="$(find velodyne_driver)/launch/nodelet_manager.launch" />
+	
+    <!-- start transform nodelet -->
+	<include file="$(find velodyne_pointcloud)/launch/transform_nodelet.launch">
+	<arg name="calibration"value="$(find velodyne_pointcloud)/params/64e_utexas.yaml"/>
+</include
+</launch>
+```
+
+#### laser scanner
+
+模拟器
+
+真实的 scanner 驱动
+
+```
+# Hokuyo laser
+$ sudo apt-get install ros-kinetic-hokuyo3d 
+
+# SICK laser
+$ sudo apt-get install ros-kinetic-sick-tim ros-kinetic-lms1xx
+```
+
+#### 单目和立体相机
+
+模拟器
+
+```
+# 单目相机
+$ roslaunch sensor_sim_gazebo camera.launch
+
+# 或立体相机
+$ roslaunch sensor_sim_gazebo stereo_camera.launch
+
+# 单目相机查看图像
+$ rosrun imageview imageview image:=/sensor/camera1/image_raw
+
+# 立体相机查看图像
+$ rosrun image_view image_view image:=/stereo/camera/right/image_raw
+$ rosrun image_view image_view image:=/stereo/camera/left/image_raw
+```
+
+真实情况安装各个厂商的相机的驱动
+
+Point Grey camera (http://wiki.ros.org/pointgrey_camera_driver)
+
+Mobileyesensor（https://autonomoustuff.com/product/mobileye-camera-dev-kit）
+
+IEEE 1394 digitalcameras (http://wiki.ros.org/camera1394)
+
+ZEDcamera (http://wiki.ros.org/zed-ros-wrapper )
+
+normal USB web camera (http://wiki.ros.org/usb_cam)
+
+####GPS
+
+模拟器
+
+```
+$ roslaunch sensor_sim_gazebo gps.launch
+```
+
+####IMU
+
+启动模拟器
+
+```
+$ roslaunch sensor_sim_gazebo imu.launch
+```
+
+#### ultrasonic sensor
+
+启动模拟器
+
+```
+$ roslaunch sensor_sim_gazebo sonar.launch
+```
+
+####低成本的 LIDAR 传感器
+
+Sweep LIDAR
+
+> 测量角度 360 度，距离范围为 40 米
+
+```
+# 安装依赖
+$ sudo apt-get install ros-kinetic-pcl-conversions ros-kinetic-pointcloud-to-laserscan
+
+# clone并使用 catkin_make 安装
+https://github.com/scanse/sweep-ros
+
+# 把 LIDAR 通过 USB 连接到 PC,且修改权限
+$ sudo chmod 777 /dev/ttyUSB0
+
+# 查看雷达扫描过程
+$ roslaunch sweep_ros view_sweep_laser_scan.launch
+
+# 查看点云数据
+$ roslaunch sweep_ros view_sweep_pc2.launch
+```
+
+RPLIDAR
+
+> 测量角度 360 度，测量半径 12 米 
+>
+> ros 包地址：http://wiki.ros.org/rplidar 
+>
+> GitHub  地址：https://github.com/robopeak/rplidar_ros
+
+#### 模拟无人车
+
+```
+# 安装依赖
+$ sudo apt-get install ros-indigo-controller-manager
+$ sudo apt-get install ros-indigo-ros-control ros-indigo-ros-controllers
+$ sudo apt-get install ros-indigo-gazebo-ros-control
+
+# 安装激光雷达
+$ sudo apt-get install ros-indigo-velodyne
+
+# 毫米波雷达
+$ sudo apt-get install ros-indigo-sicktoolbox ros-indigo-sicktoolbox-wrapper
+
+# 创建新的 ROS 空间并下载无人车模拟器
+$ cd ~
+$ mkdir -p catvehicle_ws/src
+$ cd catvehicle_ws/src
+$ catkin_init_workspace
+$ cd ~/catvehicle_ws/src
+$ git clone https://github.com/sprinkjm/catvehicle.git
+$ git clone https://github.com/sprinkjm/obstaclestopper.git
+$ cd ../
+$ catkin_make
+$ source ~/catvehicle_ws/devel/setup.bash
+
+# 启动模拟器（只是在命令行启动）
+$ roslaunch catvehicle catvehicle_skidpan.launch
+
+# 打开另一窗口输入（可以看到无人车模拟环境）
+$ gzclient
+
+# rviz 可以看到各传感器的数据
+$ rosrun rviz rvize  
+
+# 执行如下命令成功之后，可以使用键盘移动车辆
+$ roslaunch turtlebot_teleop keyboard_teleop.launch
+$ rosrun topic_tools relay /cmd_vel_mux/input/teleop /catvehicle/cmd_vel
+
+# 地图构建
+$ roslaunch catvehicle catvehicle_canyonview.laun
+$ gzclient
+$ roslaunch catvehicle hectorslam.launch
+
+# To visualizethe map generated, you can start Rvizand open theconfiguration filecalled #catvehicle.rviz
+
+# 保存地图
+$ rosrun map_server map_saver -f map_name
+```
+
+Interfacing a DBW car with ROS
+
+> 下面的开源项目是属于 Dataspeed 公司  (http://dataspeedinc.com/ )
+
+```
+# 安装包
+bash <(wget -q -O - https://bitbucket.org/DataspeedInc/dbw_mkz_ros/raw/default/dbw_mkz/scripts/ros_install.bash)
+
+# 查看车
+$ roslaunch dbw_mkz_description rviz.launch
+
+# 查看传感器数据，下载并进行解压
+$ wget https://bitbucket.org/DataspeedInc/dbw_mkz_ros/downloads/mkz_20151207_extra.bag.tar.gz
+
+# 读取传感器数据
+$ roslaunch dbw_mkz_can offline.launch
+
+# 查看汽车模型
+$ roslaunch dbw_mkz_description rviz.launch
+
+# 执行 bag 文件
+$ rosbag play mkz_20151207.bag -clock
+
+# 查看传感器数据
+$ rosrun tf static_transform_publisher 0.94 0 1.5 0.07 -0.02 0 base_footprint velodyne 50
+
+# 和汽车通信
+$ roslaunch dbw_mkz_can dbw.laun
+
+# 使用操纵杆控制
+$ roslaunch dbw_mkz_joystick_demo joystick_demo.launch sys:=true
+```
 
 ## 使用 VR 头盔和体感器远程操控机器人
 

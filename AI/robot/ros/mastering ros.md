@@ -69,7 +69,6 @@ namespace calculator_plugins {
   };
 };
 #endif
-
 ```
 
 ##### 第三步 使用 calculator_plugins.cpp 导出插件
@@ -430,5 +429,333 @@ https://bitbucket.org/osrf/gazebo，可以获取各种 Gazebo 插件
 
 
 
+#### 编写 ROS 控制器和可视化插件
 
+理解 pr2_mechanism 的各个包：
+
+**pr2_controller_interface**：编写一个基本的实时控制器必须继承 pr2_controller_
+interface::Controller 类，这个类有四个重要的方法  init() , start(), update(), and stop(). 
+
+基本结构：
+
+```c++
+namespace pr2_controller_interface {
+ class Controller {
+ public:
+ 	virtual bool init(pr2_mechanism_model::RobotState *robot,
+ 		ros::NodeHandle &n);
+ 	virtual void starting();
+ 	virtual void update();
+ 	virtual void stopping();
+ };
+}
+```
+
+工作流程：
+
+![](imgs/30.png)
+
+
+
+开发一个控制器，可以获取连接点和按照正弦曲线移动
+
+目录结构：
+
+![](imgs/31.png)
+
+##### 第一步 创建包
+
+> 依赖 pr2_controller_interface pr2_mechanism_model 等
+
+```
+$ catkin_create_pkg my_controller_pkg roscpp pluginlib 
+pr2_controller_interface pr2_mechanism_model
+```
+
+#####第二步 创建控制器头文件
+
+> 继承自 pr2_controller_interface::Controller 类
+
+```c++
+#include <pr2_controller_interface/controller.h>
+#include <pr2_mechanism_model/joint.h>
+
+namespace my_controller_ns {
+
+// Inheriting Controller class inside pr2_controller_interface
+class MyControllerClass: public pr2_controller_interface::Controller {
+    private:
+       pr2_mechanism_model::JointState* joint_state_;
+       double init_pos_;
+    public:
+       virtual bool init(pr2_mechanism_model::RobotState *robot, ros::NodeHandle &n);
+       virtual void starting();
+       virtual void update();
+       virtual void stopping();
+   };
+}
+```
+
+#####第三步 编写控制器 cpp
+
+```c++
+#include "my_controller_pkg/my_controller_file.h"
+#include <pluginlib/class_list_macros.h>
+
+namespace my_controller_ns {
+
+/// Controller initialization in non-realtime
+// 在控制器被 controller manager 加载的时候会调用该方法
+bool MyControllerClass::init(pr2_mechanism_model::RobotState *robot,
+                            ros::NodeHandle &n) {
+  std::string joint_name;
+  if (!n.getParam("joint_name", joint_name)) {
+    ROS_ERROR("No joint given in namespace: '%s')", n.getNamespace().c_str());
+    return false;
+  }
+
+  joint_state_ = robot->getJointState(joint_name);
+  if (!joint_state_) {
+    ROS_ERROR("MyController could not find joint named '%s'", joint_name.c_str());
+    return false;
+  }
+  return true;
+}
+
+/// Controller startup in realtime
+void MyControllerClass::starting() {
+  init_pos_ = joint_state_->position_;
+}
+
+/// Controller update loop in realtime
+void MyControllerClass::update() {
+  double desired_pos = init_pos_ + 15 * sin(ros::Time::now().toSec());
+  double current_pos = joint_state_->position_;
+  joint_state_->commanded_effort_ = -10 * (current_pos - desired_pos);
+}
+
+// Controller stopping in realtime
+void MyControllerClass::stopping(){}
+} // namespace
+
+// Register controller to pluginlib
+PLUGINLIB_EXPORT_CLASS(my_controller_ns::MyControllerClass, 
+                         pr2_controller_interface::Controller);
+```
+
+##### 第四步 理解上面的代码
+
+##### 第五步 添加插件描述文件 controller_plugins.xml
+
+```xml
+<library path="lib/libmy_controller_lib">
+    <class name="my_controller_pkg/MyControllerPlugin"
+           type="my_controller_ns::MyControllerClass"
+           base_class_type="pr2_controller_interface::Controller" />
+</library>
+```
+
+##### 第六步 更新 package.xml
+
+```xml
+<export>
+	<pr2_controller_interface plugin="${prefix}/controller_plugins.xml"/>
+</export>
+```
+
+##### 第七步 更新 CMakeLists.txt
+
+```cmake
+## my_controller_file library
+add_library(my_controller_lib src/my_controller_file.cpp)
+target_link_libraries(my_controller_lib ${catkin_LIBRARIES})
+```
+
+#####第八步 编译控制器
+
+```
+$ catkin_make
+
+# 显示所有以 pr2_controller_interface 作为基础类插件的控制器的文件
+# 如果能看到上面新建的 controller_plugins.xml 表明创建成功
+$ rospack plugins --attrib=plugin pr2_controller_interface
+```
+
+##### 第九步 编写控制器配置文件
+
+配置文件包括 控制器的类别，连接名称，限制范围等，必须以 YAML 格式保存在包内部
+
+```yaml
+my_controller_name:
+ type: my_controller_pkg/MyControllerPlugin
+ joint_name: r_shoulder_pan_joint
+```
+
+#####第十步 编写 launch 文件
+
+> 使用该配置文件可以运行控制器
+
+```xml
+<launch>
+   <rosparam file="$(find my_controller_pkg)/my_controller.yaml" command="load" />
+
+   <node pkg="pr2_controller_manager" type="spawner" args="my_controller_name" name="my_controller_spawner"/>
+</launch>
+```
+
+#####第十一步 在 PR2 模拟器中运行控制器
+
+```
+# 启动模拟器，伴随着所有相关控制器也启动了
+$ roslaunch pr2_gazebo pr2_empty_world.launch
+
+# 我们控制的连接点是 r_shoulder_pan_joint， 如果已经存在对应的控制器，我们的控制是无效的，必须把之前# 的给停掉
+
+# 展示 pr2 的所有控制器
+$ rosrun pr2_controller_manager pr2_controller_manager list
+
+# 停掉 r_arm_controller
+$ rosrun pr2_controller_manager pr2_controller_manager stop 
+r_arm_controller
+
+# 启动我们自己的控制器
+$ roslaunch my_controller_pkg my_controller.launch
+```
+
+#### ros_control 包
+
+之前使用的 pr2_mechanism 包只适用于 PR2，为了获得更好的泛化性，形成了一个新的包  ros_control (http://wiki.ros.org/ros_control)，ros_control 实现了一些标准的控制器，比如： effort_controllers, joint_state_controllers，position_controllers, and velocity controllers 等，使用于所有的机器人。
+
+
+
+#### 理解 ROS RViz 及其插件
+
+在 RViz 顶部的 Dockable panels 可以添加自己编写的插件
+
+RViz 使用 Qt 写的，所以在写页面的时候用到了 Qt 的相关东西。
+
+##### 第一步 创建包
+
+> rviz 在编译的时候已经依赖了  Qt ，所以不用在添加 Qt 依赖
+
+```
+$ catkin_create_pkg rviz_telop_commander roscpp rviz std_msgs
+```
+
+##### 第二部步 创建头文件
+
+```c++
+
+#ifndef TELEOP_PAD_H
+#define TELEOP_PAD_H
+#include <ros/ros.h>
+#include <ros/console.h>
+#include <rviz/panel.h>
+
+class QLineEdit;
+
+namespace rviz_telop_commander
+{
+
+//class DriveWidget;
+
+// BEGIN_TUTORIAL
+// Here we declare our new subclass of rviz::Panel.  Every panel which
+// can be added via the Panels/Add_New_Panel menu is a subclass of
+// rviz::Panel.
+//
+// TeleopPanel will show a text-entry field to set the output topic
+// and a 2D control area.  The 2D control area is implemented by the
+// DriveWidget class, and is described there.
+class TeleopPanel: public rviz::Panel
+{
+// This class uses Qt slots and is a subclass of QObject, so it needs
+// the Q_OBJECT macro.
+Q_OBJECT
+public:
+  // QWidget subclass constructors usually take a parent widget
+  // parameter (which usually defaults to 0).  At the same time,
+  // pluginlib::ClassLoader creates instances by calling the default
+  // constructor (with no arguments).  Taking the parameter and giving
+  // a default of 0 lets the default constructor work and also lets
+  // someone using the class for something else to pass in a parent
+  // widget as they normally would with Qt.
+  TeleopPanel( QWidget* parent = 0 );
+
+  // Now we declare overrides of rviz::Panel functions for saving and
+  // loading data from the config file.  Here the data is the
+  // topic name.
+  virtual void load( const rviz::Config& config );
+  virtual void save( rviz::Config config ) const;
+
+  // Next come a couple of public Qt slots.
+public Q_SLOTS:
+  // The control area, DriveWidget, sends its output to a Qt signal
+  // for ease of re-use, so here we declare a Qt slot to receive it.
+//  void setVel( float linear_velocity_, float angular_velocity_ );
+
+  // In this example setTopic() does not get connected to any signal
+  // (it is called directly), but it is easy to define it as a public
+  // slot instead of a private function in case it would be useful to
+  // some other user.
+  void setTopic( const QString& topic );
+
+  // Here we declare some internal slots.
+protected Q_SLOTS:
+  // sendvel() publishes the current velocity values to a ROS
+  // topic.  Internally this is connected to a timer which calls it 10
+  // times per second.
+  void sendVel();
+
+  void update_Linear_Velocity();
+  void update_Angular_Velocity();
+
+  // updateTopic() reads the topic name from the QLineEdit and calls
+  // setTopic() with the result.
+  void updateTopic();
+
+  // Then we finish up with protected member variables.
+protected:
+  // The control-area widget which turns mouse events into command
+  // velocities.
+ // DriveWidget* drive_widget_;
+
+  // One-line text editor for entering the outgoing ROS topic name.
+  QLineEdit* output_topic_editor_;
+
+  // The current name of the output topic.
+  QString output_topic_;
+
+  QLineEdit* output_topic_editor_1;
+
+  // The current name of the output topic.
+  QString output_topic_1;
+
+  QLineEdit* output_topic_editor_2;
+
+  // The current name of the output topic.
+  QString output_topic_2;
+
+
+  // The ROS publisher for the command velocity.
+  ros::Publisher velocity_publisher_;
+
+  // The ROS node handle.
+  ros::NodeHandle nh_;
+
+  // The latest velocity values from the drive widget.
+  float linear_velocity_;
+  float angular_velocity_;
+  // END_TUTORIAL
+};
+
+} // end namespace rviz_plugin_tutorials
+
+#endif // TELEOP_PANEL_H
+
+```
+
+。。。。
+
+  
 

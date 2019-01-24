@@ -24,7 +24,7 @@
 
 <a href="Spark/readme.md">Spark</a>
 
-<a href="TensowFlow分布式搭建">TensowFlow分布式搭建</a>
+<a href="TensorFlow分布式搭建.md">TensorFlow分布式搭建</a>
 
 <a href="CFR minimization.md">CFR minimization</a>
 
@@ -38,7 +38,7 @@
 
 <a href="随机森林.md">随机森林</a>
 
-<a href=">交叉熵和相对熵.md">交叉熵和相对熵</a>
+<a href="交叉熵和相对熵.md">交叉熵和相对熵</a>
 
 <a href="RNN.md">RNN</a>
 

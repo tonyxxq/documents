@@ -16,8 +16,6 @@
 
 <a href="planing/readme.md">planing</a>
 
-<a href="ros/readme.md">ros</a>
-
 <a href="trajectory generatioon/readme.md">trajectory generatioon</a>
 
 <a href="定位/readme.md">定位</a>

@@ -1,4 +1,4 @@
-- 安装mysql
+- 安装 mysql
 
   ```
   sudo apt-get install mysql-server mysql-client

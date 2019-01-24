@@ -15,3 +15,10 @@
 <a href="DP.md">DP</a>
 
 <a href="DRQN.md">DRQN</a>
+
+<a href="KL散度.md">KL散度</a>
+
+<a href="NFSP.md">NFSP</a>
+
+<a href="TRPO.md">TRPO</a>
+

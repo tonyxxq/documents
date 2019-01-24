@@ -17,13 +17,13 @@
 - 文件上传\下载
 
   ```
-  #下载文件到当前目录（自定义名称）
+  # 下载文件到当前目录（自定义名称）
   curl  -o name downloadurl 
 
-  #下载文件到当前目录(使用默认名称)
+  # 下载文件到当前目录(使用默认名称)
   curl  -O  downloaduarl 
 
-  #wget从指定的url下载文件，支持断点续传，参考http:#man.linuxde.net/wget
+  # wget从指定的url下载文件，支持断点续传，参考http:#man.linuxde.net/wget
   wget downloaduarl
 
   # 如果遇到insecurely
@@ -33,7 +33,7 @@
   -i:下载多个文件
   -r:递归下载
 
-  #scp，服务器之间传递数据，上传下载位置互换，若指定端口，添加参数-p,i.e: -p 8888
+  # scp，服务器之间传递数据，上传下载位置互换，若指定端口，添加参数-p,i.e: -p 8888
   scp /Users/Biao/Desktop/a.zip root@192.168.82.130:/root
   scp root@192.168.82.130:/root/a.zip /Users/Biao/Desktop
   ```
@@ -614,10 +614,10 @@
   ```
   # 列出所有进程长格式的详细信息
   ps -ef 
-
+  
   # 列出当前用户所有跟terminal关联的进程详细信息
   ps -af 
-
+  
   # 列出所有进程的信息
   ps -ax 
   ```
@@ -627,13 +627,13 @@
   ```
   # 判断端口是否能访问
   telnet 192.168.10.222 8888
-
+  
   # 查看所有udp端口
   netstate -nulp
-
+  
   # 查看所有tcp端口
   netstate -ntlp
-
+  
   # 查看指定端口的应用程序
   lsof -i :8888
   参数说明：
@@ -650,29 +650,29 @@
   #注意：添加服务到chkconfig之前，需要把启动文件nexus放到/etc/init.d目录
   #修改配置/etc/init.d/nexus， 指定nexus文件的home目录
   NEXUS_HOME="/data/edu/nexus/nexus-2.14.8-01"
-
+  
   # 执行命令，成功加入chkconfig服务列表
   chkconfig --add nexus
   chkconfig --level 35 nexus on
-
+  
   #列出所有的系统服务。
   chkconfig --list
-
+  
   #增加nexus服务。
   chkconfig --add nexus
-
+  
   #删除nexus服务。
   chkconfig --del nexus
-
+  
   #设置nexus在运行级别为2、3、4、5的情况下都是on（开启）的状态。
   chkconfig --level nexus 2345 on        
-
+  
   #列出nexus服务设置情况。
   chkconfig --list nexusx 
-
+  
   #设定mysqld在各等级为on，“各等级”包括2、3、4、5等级。
   chkconfig nexus on
-
+  
   # 加上之后就可以使用下面的命令进行服务管理了
   service nexus restart
   service nexus start
@@ -695,38 +695,35 @@
   ```
   # 安装fontconfig，使用fontconfig安装字体库
   yum -y install fontconfig
-
+  
   # 进入share目录可以看到多了fonts和fontconfig目录
   cd /usr/share
-
+  
   # 在/usr/shared/fonts目录下新建一个目录chinese
   mdkir chinese
-
+  
   # 在C:\Windows\Fonts目录下找到字体，且把字体放入刚才创建的chinese目录下
   # 设置访问权限
   chmod -R 755 /usr/share/fonts/chinese
-
+  
   # 接下来需要安装ttmkfdir来搜索目录中所有的字体信息，并汇总生成fonts.scale文件
   yum -y install ttmkfdir
-
+  
   # 执行ttmkfdir命令
   ttmkfdir -e /usr/share/X11/fonts/encodings/encodings.dir
-
+  
   # 编辑/etc/fonts/fonts.conf
   vi /etc/fonts/fonts.conf
-
+  
   # 把新加的字体加到Font list中
   <dir>/usr/share/fonts/chinese</dir>
-
+  
   # 刷新字体缓存
   fc-cache
-
+  
   # fc-list查看字体列表
   fc-list
-
   ```
-
-  ​
 
 - 当执行操作的手ssh容易超时，出现错误.Write failed: Broken pipe
 
@@ -785,7 +782,7 @@
   ```
   # 每隔一秒高亮显示网络链接数的变化情况
   $ watch -n 1 -d netstat  -ant 
-
+  
   # 10秒一次输出系统的平均负载
   $ watch -n  10 ' cat /proc/loadavg'
   ```
@@ -799,4 +796,6 @@
   $ dmesg | grep -i leap
   ```
 
-  ​
+- Chrony 设置服务器集群同步时间
+
+   参考：https://blog.csdn.net/linuxprobe18/article/details/80460068

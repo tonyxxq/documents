@@ -733,6 +733,18 @@ if __name__ == '__main__':
 
 #### 使用 darknet_ros
 
+包含了大部分感知用到的包，比如 OpenCV, PCL 等
+
+```
+$ sudo apt-get install ros-indigo-perception
+```
+
+
+
+
+
+
+
 安装
 
 https://github.com/leggedrobotics/darknet_ros

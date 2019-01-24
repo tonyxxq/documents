@@ -344,15 +344,15 @@ hello_world.cc 内容
 > - gazebo/gazebo.hh： 包含 Gazebo 的一些基本的方法
 >
 > - gazebo/physics/physics.hh: 物理引擎
-> -  gazebo/rendering/rendering.hh:处理渲染参数
-> -  gazebo/sensors/sensors.hh: 处理传感器
+> - gazebo/rendering/rendering.hh:处理渲染参数
+> - gazebo/sensors/sensors.hh: 处理传感器
 >
 > 插件导出的宏命令
 >
 > - GZ_REGISTER_MODEL_PLUGIN：模型插件导出
 > - GZ_REGISTER_SENSOR_PLUGIN： 传感器插件导出
-> -  GZ_REGISTER_SYSTEM_PLUGIN：系统插件导出
-> -  GZ_REGISTER_VISUAL_PLUGIN：可视化插件导出
+> - GZ_REGISTER_SYSTEM_PLUGIN：系统插件导出
+> - GZ_REGISTER_VISUAL_PLUGIN：可视化插件导出
 > - GZ_REGISTER_WORLD_PLUGIN：导出为世界插件
 
 ```c++
@@ -752,10 +752,79 @@ protected:
 } // end namespace rviz_plugin_tutorials
 
 #endif // TELEOP_PANEL_H
-
 ```
 
 。。。。
+
+#####ROS – OpenCV 接口　vision_opencv
+
+vision_opencv 由两个包组成
+
+cv_bridge :可以把 ROS 的获取的 sensor_msgs/Image 格式的消息数据，转换为 open_cv  能够处理的 cv::Mat 格式，反之亦然。
+
+image_geometry: 相机矫正，有 C++ 和 python 两种库，把 sensor_msgs/CameraInfo 消息格式的参数传给open_cv 的矫正函数
+
+##### ROS – PCL 接口　perception_pcl
+
+perception_pcl 有如下包：
+
+pcl_conversions：把 PCL 数据类型转换为 ROS 的消息格式，反之亦然。
+
+pcl_msgs：包含　PCL 相关的消息格式，包括，ModelCoefficients，PointIndices，PolygonMesh，Vertices
+
+pcl_ros：包含一些工具和结点，把 PCL 数据转换位 ROS 的格式　 
+
+pointcloud_to_laserscan：把 3D 点云数据转换为 2D 的雷达扫描，用于机器人的 2D-SLAM 导航
+
+##### 安装　ROS perception
+
+。。。
+
+#####使用 ROS 和　OpenCV　进行图像处理
+
+##### 第一步：创建包
+
+```
+$ catkin_create_pkg cv_bridge_tutorial_pkg cv_bridge image_transport
+roscpp sensor_msgs std_msgs
+```
+
+#####第二步：创建文件 sample_cv_bridge_node.cpp
+
+##### 第三步：代码
+
+```c++
+#include <image_transport/image_transport.h>
+
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
+
+//　OpenCV 图像处理和 GUI
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
+// 用于接收和发送 ROS 的图像消息，比　ros::Publishers 更高效
+image_transport::ImageTransport it_;
+public:
+Edge_Detector(): it_(nh_)
+{
+// Subscribe to input video feed and publish output video feed
+image_sub_ = it_.subscribe("/usb_cam/image_raw", 1,
+&ImageConverter::imageCb, this);
+image_pub_ = it_.advertise("/edge_detector/processed_image", 1);
+```
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

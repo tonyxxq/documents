@@ -4,7 +4,7 @@
 
 <a href="c++.md">c++</a>
 
-<a href="c++环境安装.md">c++环境安装</a>
+<a href="c++环境安装/readme.md">c++环境安装</a>
 
 <a href="GDB/readme.md">GDB</a>
 

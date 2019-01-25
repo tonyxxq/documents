@@ -780,7 +780,11 @@ pointcloud_to_laserscan：把 3D 点云数据转换为 2D 的雷达扫描，用�
 
 。。。
 
-#####使用 ROS 和　OpenCV　进行图像处理
+#####使用 ROS 和 OpenCV 图像处理
+
+目录结构：
+
+![](imgs/32.png)
 
 ##### 第一步：创建包
 
@@ -789,7 +793,7 @@ $ catkin_create_pkg cv_bridge_tutorial_pkg cv_bridge image_transport
 roscpp sensor_msgs std_msgs
 ```
 
-#####第二步：创建文件 sample_cv_bridge_node.cpp
+#####第二步：创建 sample_cv_bridge_node.cpp 文件
 
 ##### 第三步：代码
 
@@ -803,7 +807,7 @@ roscpp sensor_msgs std_msgs
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-// 用于接收和发送 ROS 的图像消息，比　ros::Publishers 更高效
+// 用于接收和发送 ROS 的图像消息，比 ros::Publishers 更高效
 image_transport::ImageTransport it_;
 public:
 Edge_Detector(): it_(nh_)

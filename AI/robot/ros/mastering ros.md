@@ -57,10 +57,10 @@ namespace calculator_plugins {
 		} catch(int e) {
 			std::cerr<<"Exception while inputting numbers"<<std::endl;
 		}
-	}	
+	}
 
 	double operation() {
-		return(number1_+number2_);
+		return(number1_ + number2_);
 	}
 
     private:
@@ -132,7 +132,7 @@ int main(int argc, char** argv) {
 ```xml
 <!--导出第五步创建的 xml 文件，不然 ROS 系统找不到该文件-->
 <export>
- <pluginlib_calculator plugin="${prefix}/calculator_plugins.xml"/>
+    <pluginlib_calculator plugin="${prefix}/calculator_plugins.xml"/>
 </export>
 
 <!--添加依赖-->
@@ -645,7 +645,6 @@ $ catkin_create_pkg rviz_telop_commander roscpp rviz std_msgs
 ##### 第二部步 创建头文件
 
 ```c++
-
 #ifndef TELEOP_PAD_H
 #define TELEOP_PAD_H
 #include <ros/ros.h>
@@ -718,7 +717,7 @@ protected Q_SLOTS:
 protected:
   // The control-area widget which turns mouse events into command
   // velocities.
- // DriveWidget* drive_widget_;
+  // DriveWidget* drive_widget_;
 
   // One-line text editor for entering the outgoing ROS topic name.
   QLineEdit* output_topic_editor_;
@@ -770,7 +769,7 @@ perception_pcl 有如下包：
 
 pcl_conversions：把 PCL 数据类型转换为 ROS 的消息格式，反之亦然。
 
-pcl_msgs：包含　PCL 相关的消息格式，包括，ModelCoefficients，PointIndices，PolygonMesh，Vertices
+pcl_msgs：包含 PCL 相关的消息格式，包括，ModelCoefficients，PointIndices，PolygonMesh，Vertices
 
 pcl_ros：包含一些工具和结点，把 PCL 数据转换位 ROS 的格式　 
 

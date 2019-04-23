@@ -799,3 +799,6 @@
 - Chrony 设置服务器集群同步时间
 
    参考：https://blog.csdn.net/linuxprobe18/article/details/80460068
+
+
+常用命令总结：https://mp.weixin.qq.com/s/2dBCvFGoZBv_yy2arvpqag

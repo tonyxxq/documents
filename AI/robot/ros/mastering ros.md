@@ -1,5 +1,7 @@
 #### 3D Robot Model
 
+https://blog.csdn.net/sunbibei/article/details/53287975
+
 > 使用模型可以在机器人制造之前发现一些致命的缺点，并且可以测试是否能投入使用
 
 ros 建立模型常用的一些包， robot_model，joint_state_publisher，robot_state_publisher，xacro

@@ -800,5 +800,13 @@
 
    参考：https://blog.csdn.net/linuxprobe18/article/details/80460068
 
+- lshw：查看硬件信息
+
+   lscpu：查看cpu信息
+
+   lsusb：查看usb信息
+
+   arch：查看系统的架构  x86 表示32位  x86_64表示64位
+
 
 常用命令总结：https://mp.weixin.qq.com/s/2dBCvFGoZBv_yy2arvpqag

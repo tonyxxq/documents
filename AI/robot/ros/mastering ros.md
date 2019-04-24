@@ -1,3 +1,682 @@
+#### 3D Robot Model
+
+> 使用模型可以在机器人制造之前发现一些致命的缺点，并且可以测试是否能投入使用
+
+ros 建立模型常用的一些包， robot_model，joint_state_publisher，robot_state_publisher，xacro
+
+#####使用 URDF 建立模型
+
+**link**：该标签可以设置连杆的大小、形状、颜色、纹理、惯性矩阵和碰撞属性
+
+**joint**：该标签代表 link 之间的连接点，可以设置移动的限制和速度，有多种不同类型包括，旋转、连续、棱柱、固定、浮动和平面等（revolute, continuous, prismatic, fixed, floating, and planar）
+
+**robot**：该标签封装了整个 robot 模型，内部可以定义 joint 和 link，属性可以定义 robot 的名称
+
+**gazebo**：使用该标签，可以应用 gazeboo 中的插件、材料属性等
+
+更多请参考：http://wiki.ros.org/urdf/XML
+
+注意：collision 和 inertial是必须的，否则 Gazebo 将不会成功的加载模型
+
+示例：
+
+```xml
+<?xml version="1.0"?>
+<robot name="pan_tilt">
+  <!--link 名称为 base_link-->
+  <link name="base_link">
+      <!--外观，包括形状、位姿、材料-->
+      <visual>
+          <geometry>
+              <!--圆柱-->
+              <cylinder length="0.01" radius="0.2"/>
+          </geometry>
+          <origin rpy="0 0 0" xyz="0 0 0"/>
+          <material name="yellow">
+              <color rgba="1 1 0 1"/>
+          </material>
+      </visual>
+	
+      <!--碰撞-->
+      <collision>
+          <geometry>
+		  	  <cylinder length="0.03" radius="0.2"/>
+          </geometry>
+          <origin rpy="0 0 0" xyz="0 0 0"/>
+      </collision>
+    
+      <!--惯性-->
+      <inertial>
+		  <mass value="1"/>
+		  <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+      </inertial>
+  </link>
+
+  <!--joint 名称为 pan_joint 类型为 旋转-->  
+  <joint name="pan_joint" type="revolute">
+      <parent link="base_link"/>
+      <child link="pan_link"/>
+      <origin xyz="0 0 0.1"/>
+      <axis xyz="0 0 1"/>
+      <!--effort 表示：最大受力 velocity：最大速度 lower：最小旋转幅度 upper：最大旋转幅度，如果类型 是菱形，单位是米-->
+      <limit effort="300" velocity="0.1" lower="-3.14" upper="3.14"/>
+      <dynamics damping="50" friction="1"/>
+  </joint>
+  ......	  
+</robot>
+```
+
+检查  urdf 文件是否有错误
+
+```
+$ check_urdf pan_tilt.urdf
+```
+
+查看robot links 的结构，生成 gv 和 pdf 文件
+
+```
+$ urdf_to_graphiz pan_tilt.urdf
+```
+
+查看结构
+
+```
+$ evince pan_tilt.pdf
+```
+
+**在 rviz 中查看创建的 urdf**
+
+ 创建 view_demo.launch
+
+```xml
+<launch>
+	<arg name="model"/>
+ 	<param name="robot_description" textfile="$(find mastering_ros_
+		robot_description_pkg)/urdf/pan_tilt.urdf"/>
+    
+    <!--是否显示 joint_state_publisher 的图形化界面 -->
+    <param name="use_gui" value="true"/>
+ 	
+    <node name="joint_state_publisher" pkg="joint_state_publisher"
+		type="joint_state_publisher"/>
+ 	<node name="robot_state_publisher" pkg="robot_state_publisher"
+		type="state_publisher"/>
+ 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find mastering_
+		ros_robot_description_pkg)/urdf.rviz" required="true"/>
+</launch>
+```
+
+在 rviz 中查看结果
+
+```
+ $ roslaunch mastering_ros_robot_description_pkg view_demo.launch
+```
+
+**使用 xacro 建立模型**
+
+> 由于 urdf  繁琐、不能复用、不能模块化、没有可编程性，所以出现了 xacro 
+>
+> **更简洁**：在描述文件中加入了宏（macro），增强复用性，且可以引用外部文件，使得文件更简洁、模块化、可读性增强
+>
+> **可编程**：在描述文件中可以设置变量，常量、数学表达式、条件判断等
+
+示例：
+
+```xml
+<?xml version="1.0"?>
+<robot name="seven_dof_arm" xmlns:xacro="http://www.ros.org/wiki/xacro">
+   <!--定义一系列的常量-->	
+   <!-- Include materials -->
+    <material name="Black">
+        <color rgba="0.0 0.0 0.0 1.0"/>
+    </material>
+
+    <material name="Red">
+        <color rgba="0.8 0.0 0.0 1.0"/>
+    </material>
+
+    <material name="White">
+        <color rgba="1.0 1.0 1.0 1.0"/>
+    </material>
+
+  <property name="deg_to_rad" value="0.01745329251994329577"/>
+
+  <!-- Constants -->
+  <property name="M_SCALE" value="0.001 0.001 0.001"/> 
+  <property name="M_PI" value="3.14159"/>
+
+  <!-- Shoulder pan link properties -->
+  <property name="shoulder_pan_width" value="0.04" />
+  <property name="shoulder_pan_len" value="0.08" />
+
+  <!-- Shoulder pitch link properties -->
+  <property name="shoulder_pitch_len" value="0.14" />
+  <property name="shoulder_pitch_width" value="0.04" />
+  <property name="shoulder_pitch_height" value="0.04" />
+
+  <!-- Elbow roll link properties -->
+  <property name="elbow_roll_width" value="0.02" />
+  <property name="elbow_roll_len" value="0.06" />
+
+  <!-- Elbow pitch link properties -->
+  <property name="elbow_pitch_len" value="0.22" />
+  <property name="elbow_pitch_width" value="0.04" />
+  <property name="elbow_pitch_height" value="0.04" />
+
+  <!-- Wrist roll link properties -->
+  <property name="wrist_roll_width" value="0.02" />
+  <property name="wrist_roll_len" value="0.04" />
+
+  <!-- wrist pitch link properties -->
+  <property name="wrist_pitch_len" value="0.06" />
+  <property name="wrist_pitch_width" value="0.04" />
+  <property name="wrist_pitch_height" value="0.04" />
+
+  <!-- Gripper roll link properties -->
+  <property name="gripper_roll_width" value="0.04" />
+  <property name="gripper_roll_len" value="0.02" />
+
+  <!-- Left gripper -->
+  <property name="left_gripper_len" value="0.08" />
+  <property name="left_gripper_width" value="0.01" />
+  <property name="left_gripper_height" value="0.01" />
+
+  <!-- Right gripper -->
+  <property name="right_gripper_len" value="0.08" />
+  <property name="right_gripper_width" value="0.01" />
+  <property name="right_gripper_height" value="0.01" />
+
+  <!-- Right gripper -->
+  <property name="grasp_frame_len" value="0.02" />
+  <property name="grasp_frame_width" value="0.02" />
+  <property name="grasp_frame_height" value="0.02" />
+   
+   <!--宏-->
+   <xacro:macro name="inertial_matrix" params="mass">
+      <inertial>
+      	<mass value="${mass}" />
+        <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="0.5" iyz="0.0" izz="1.0" />
+      </inertial>
+   </xacro:macro>
+
+   <xacro:macro name="transmission_block" params="joint_name">
+	  <transmission name="tran1">
+	    <type>transmission_interface/SimpleTransmission</type>
+	    <joint name="${joint_name}">
+	      <hardwareInterface>PositionJointInterface</hardwareInterface>
+	    </joint>
+	    <actuator name="motor1">
+	      <hardwareInterface>PositionJointInterface</hardwareInterface>
+	      <mechanicalReduction>1</mechanicalReduction>
+	    </actuator>
+	  </transmission>
+   </xacro:macro>
+
+
+<!-- BOTTOM FIXED LINK 
+This link is the base of the arm in which arm is placed 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+
+  <joint name="bottom_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="base_link"/>
+    <child link="bottom_link"/>
+  </joint>
+
+  <link name="bottom_link">
+
+    <visual>
+      <origin xyz=" 0 0 -0.04"  rpy="0 0 0"/>
+      <geometry>
+	       <box size="1 1 0.02" />
+      </geometry>
+      <material name="Brown" />
+    </visual>
+
+    <collision>
+      <origin xyz=" 0 0 -0.04"  rpy="0 0 0"/>
+      <geometry>
+	       <box size="1 1 0.02" />
+      </geometry>
+      </collision>>
+  </link>
+
+  <gazebo reference="bottom_link">
+    <material>Gazebo/White</material>
+  </gazebo>
+
+
+<!-- ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+
+  <!-- BASE LINK -->
+  <link name="base_link">
+
+    <visual>
+      <origin xyz="0 0 0" rpy="${M_PI/2} 0 0" /> <!-- rotate PI/2 -->
+      <geometry>
+
+	       <box size="0.1 0.1 0.1" />
+
+      </geometry>
+      <material name="White" />
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="${M_PI/2} 0 0" /> <!-- rotate PI/2 -->
+      <geometry>
+
+	       <box size="0.1 0.1 0.1" />
+		
+      </geometry>
+      </collision>>
+	<xacro:inertial_matrix mass="1"/>
+
+  </link>
+
+  <gazebo reference="base_link">
+    <material>Gazebo/White</material>
+  </gazebo>
+
+  <joint name="shoulder_pan_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="shoulder_pan_link"/>
+    <origin xyz="0 0 0.05" rpy="0 ${M_PI/2} ${M_PI*0}" />
+    <axis xyz="-1 0 0" />
+    <limit effort="300" velocity="1" lower="-2.61799387799" upper="1.98394848567"/>
+    <dynamics damping="50" friction="1"/>
+  </joint>
+
+
+<!-- ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+
+  <!-- SHOULDER PAN LINK -->
+  <link name="shoulder_pan_link" >
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 ${M_PI/2} 0" />
+      <geometry>
+            <cylinder radius="${shoulder_pan_width}" length="${shoulder_pan_len}"/>
+      </geometry>
+      <material name="Red" />
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 ${M_PI/2} 0" />
+      <geometry>
+            <cylinder radius="${shoulder_pan_width}" length="${shoulder_pan_len}"/>
+      </geometry>
+    </collision>
+	<xacro:inertial_matrix mass="1"/>
+  </link>
+
+  <gazebo reference="shoulder_pan_link">
+    <material>Gazebo/Red</material>
+  </gazebo>
+
+  <joint name="shoulder_pitch_joint" type="revolute">
+    <parent link="shoulder_pan_link"/>
+    <child link="shoulder_pitch_link"/>
+    <origin xyz="-0.041 0.0021 0.0" rpy="-${M_PI/2} 0 ${M_PI/2}" />
+    <axis xyz="1 0 0" />
+    <limit effort="300" velocity="1" lower="-1.19962513147" upper="1.89994105047" />
+    <dynamics damping="50" friction="1"/>
+  </joint>
+
+<!-- ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- SHOULDER PITCH LINK -->
+  <link name="shoulder_pitch_link" >
+
+    <visual>
+      <origin xyz="-0.002 0 0.04" rpy="0 ${M_PI/2} 0" />
+      <geometry>
+
+           <box size="${shoulder_pitch_len} ${shoulder_pitch_width} ${shoulder_pitch_height}" />
+
+      </geometry>
+      <material name="White" />
+    </visual>
+
+    <collision>
+      <origin xyz="-0.002 0 0.04" rpy="0 ${M_PI/2} 0" />
+      <geometry>
+           <box size="${shoulder_pitch_len} ${shoulder_pitch_width} ${shoulder_pitch_height}" />
+      </geometry>
+    </collision>
+	<xacro:inertial_matrix mass="1"/>
+  </link>
+
+  <gazebo reference="shoulder_pitch_link">
+    <material>Gazebo/White</material>
+  </gazebo>
+
+  <joint name="elbow_roll_joint" type="revolute">
+    <parent link="shoulder_pitch_link"/>
+    <child link="elbow_roll_link"/>
+    <origin xyz="-0.002 0 0.1206" rpy="${M_PI} ${M_PI/2} 0" />
+    <axis xyz="-1 0 0" />
+    <limit effort="300" velocity="1" lower="-2.61799387799" upper="0.705631162427" />
+    <dynamics damping="50" friction="1"/>
+  </joint>
+
+<!-- ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- ELBOW ROLL LINK -->
+  <link name="elbow_roll_link" >
+
+    <visual>
+      <origin xyz="-0.015 0.0 -0.0" rpy="0 ${M_PI/2} 0" />
+      <geometry>
+
+            <cylinder radius="${elbow_roll_width}" length="${elbow_roll_len}"/>
+
+      </geometry>
+      <material name="Black" />
+    </visual>
+
+    <collision>
+      <origin xyz="-0.015 0.0 -0.0" rpy="0 ${M_PI/2} 0" />
+      <geometry>
+            <cylinder radius="${elbow_roll_width}" length="${elbow_roll_len}"/>
+      </geometry>
+    </collision>
+	<xacro:inertial_matrix mass="1"/>
+  </link>
+
+  <gazebo reference="elbow_roll_link">
+    <material>Gazebo/Black</material>
+  </gazebo>
+
+  <joint name="elbow_pitch_joint" type="revolute">
+    <parent link="elbow_roll_link"/>
+    <child link="elbow_pitch_link"/>
+    <origin xyz="-0.035 0 0.0" rpy="0.055 ${M_PI/2} 0" />
+    <axis xyz="1 0 0" />
+    <limit effort="300" velocity="1" lower="-1.5953400194" upper="1.93281579274" />
+    <dynamics damping="50" friction="1"/>
+  </joint>
+
+<!-- ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+
+  <!-- ELBOW PITCH LINK -->
+  <link name="elbow_pitch_link" >
+
+    <visual>
+      <origin xyz="0 0 -0.12" rpy="0 ${M_PI/2} 0" />
+      <geometry>
+        <box size="${elbow_pitch_len} ${elbow_pitch_width} ${elbow_pitch_height}" />
+      </geometry>
+      <material name="Red" />
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 -0.12" rpy="0 ${M_PI/2} 0" />
+      <geometry>
+       <box size="${elbow_pitch_len} ${elbow_pitch_width} ${elbow_pitch_height}" />
+      </geometry>
+    </collision>
+	<xacro:inertial_matrix mass="1"/>
+  </link>
+
+  <gazebo reference="elbow_pitch_link">
+    <material>Gazebo/Red</material>
+  </gazebo>
+
+  <joint name="wrist_roll_joint" type="revolute">
+    <parent link="elbow_pitch_link"/>
+    <child link="wrist_roll_link"/>
+    <origin xyz="0.0 0.0081 -.248" rpy="0 ${M_PI/2} ${M_PI}" />
+    <axis xyz="1 0 0" />
+    <limit effort="300" velocity="1" lower="-2.61799387799" upper="2.6128806087" />
+    <dynamics damping="50" friction="1"/>
+  </joint>
+
+  <!-- WRIST ROLL LINK -->
+  <link name="wrist_roll_link" >
+    <visual>
+      <origin xyz="0 0 0" rpy="0 ${M_PI/2} 0" />
+      <geometry>
+           <cylinder radius="${elbow_roll_width}" length="${elbow_roll_len}"/>
+      </geometry>
+      <material name="Black" />
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 ${M_PI/2} 0" />
+      <geometry>
+           <cylinder radius="${elbow_roll_width}" length="${elbow_roll_len}"/>
+      </geometry>
+    </collision>
+	<xacro:inertial_matrix mass="1"/>
+  </link>
+
+  <gazebo reference="wrist_roll_link">
+    <material>Gazebo/Black</material>
+  </gazebo>
+
+  <joint name="wrist_pitch_joint" type="revolute">
+    <parent link="wrist_roll_link"/>
+    <child link="wrist_pitch_link"/>
+    <origin xyz="0.0 0.0 0.0001" rpy="0 ${M_PI/2} 0" />
+    <axis xyz="1 0 0" />
+    <limit effort="300" velocity="1" lower="-1.5953400194" upper="1.98394848567" />
+    <dynamics damping="50" friction="1"/>
+  </joint>
+
+
+<!-- ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- WRIST PITCH LINK -->
+  <link name="wrist_pitch_link">
+
+    <visual>
+      <origin xyz="0 0 0.04" rpy="0 ${M_PI/2} 0" />
+      <geometry>
+           <box size="${wrist_pitch_len} ${wrist_pitch_width} ${wrist_pitch_height}" />
+      </geometry>
+      <material name="White" />
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0.04 " rpy="0 ${M_PI/2} 0" />
+      <geometry>
+          <box size="${wrist_pitch_len} ${wrist_pitch_width} ${wrist_pitch_height}" />
+      </geometry>
+    </collision>
+	<xacro:inertial_matrix mass="1"/>
+  </link>
+
+  <gazebo reference="wrist_pitch_link">
+    <material>Gazebo/White</material>
+  </gazebo>
+
+  <joint name="gripper_roll_joint" type="revolute">
+    <parent link="wrist_pitch_link"/>
+    <child link="gripper_roll_link"/>
+    <origin xyz="0 0 0.080" rpy="${1.5*M_PI} -${.5*M_PI} 0" />
+    <axis xyz="1 0 0" />
+    <limit effort="300" velocity="1" lower="-2.61799387799" upper="2.6128806087" />
+    <dynamics damping="50" friction="1"/>
+  </joint>
+
+<!-- ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+
+  <!-- GRIPPER ROLL LINK -->
+  <link name="gripper_roll_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 ${M_PI/2} 0" />
+      <geometry>
+            <cylinder radius="${gripper_roll_width}" length="${gripper_roll_len}"/>
+      </geometry>
+      <material name="Red" />
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 ${M_PI/2} 0" />
+      <geometry>
+            <cylinder radius="${gripper_roll_width}" length="${gripper_roll_len}"/>
+      </geometry>
+    </collision>
+	<xacro:inertial_matrix mass="1"/>
+  </link>
+
+  <gazebo reference="gripper_roll_link">
+    <material>Gazebo/Red</material>
+  </gazebo>
+
+  <joint name="finger_joint1" type="prismatic">
+    <parent link="gripper_roll_link"/>
+    <child link="gripper_finger_link1"/>
+    <origin xyz="0.0 0 0" />
+    <axis xyz="0 1 0" />
+      <limit effort="100" lower="0" upper="0.03" velocity="1.0"/>
+      <safety_controller k_position="20"
+                         k_velocity="20"
+                         soft_lower_limit="${-0.15 }"
+                         soft_upper_limit="${ 0.0 }"/>
+    <dynamics damping="50" friction="1"/>
+  </joint>
+
+
+<!-- ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+
+
+  <!-- LEFT GRIPPER AFT LINK -->
+  <link name="gripper_finger_link1">
+
+     <visual>
+      <origin xyz="0.04 -0.03 0"/>
+      <geometry>
+           <box size="${left_gripper_len} ${left_gripper_width} ${left_gripper_height}" />
+
+      </geometry>
+      <material name="White" />
+    </visual>
+	<xacro:inertial_matrix mass="1"/>
+  </link>
+
+  <gazebo reference="l_gripper_aft_link">
+    <material>Gazebo/White</material>
+  </gazebo>
+
+<!-- Joint between Wrist roll and finger 2 -->
+
+  <joint name="finger_joint2" type="prismatic">
+    <parent link="gripper_roll_link"/>
+    <child link="gripper_finger_link2"/>
+    <origin xyz="0.0 0 0" />
+    <axis xyz="0 1 0" />
+    <limit effort="1" lower="-0.03" upper="0" velocity="1.0"/>
+
+<!--    <mimic joint="gripper_finger_joint" multiplier="-1.0" offset="0.0" /> -->
+
+    <dynamics damping="50" friction="1"/>
+  </joint> 
+
+<!-- ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+
+  <!-- RIGHT GRIPPER AFT LINK -->
+  <link name="gripper_finger_link2">
+    <visual>
+      <origin xyz="0.04 0.03 0"/>
+      <geometry>
+          <box size="${right_gripper_len} ${right_gripper_width} ${right_gripper_height}" 		/>
+      </geometry>
+      <material name="White" />
+    </visual>
+	<xacro:inertial_matrix mass="1"/>
+  </link>
+
+  <gazebo reference="r_gripper_aft_link">
+    <material>Gazebo/White</material>
+  </gazebo>
+
+    <!-- Grasping frame -->
+    <link name="grasping_frame">
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="0.0001"/>
+        <cuboid_inertia mass="0.0001" x="0.001" y="0.001" z="0.001"/>
+        <inertia  ixx="1.0" ixy="0.0"  ixz="0.0"  iyy="100.0"  iyz="0.0"  izz="1.0" />
+      </inertial>
+
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry>
+          <box size="${grasp_frame_len} ${grasp_frame_width} ${grasp_frame_height}" />
+      </geometry>
+      <material name="White" />
+    </visual>
+    </link>
+
+    <joint name="grasping_frame_joint" type="fixed">
+      <parent link="gripper_roll_link"/>
+      <child link="grasping_frame"/>
+      <origin xyz="0.08 0 0" rpy="0 0 0"/>
+    </joint>
+  <xacro:include filename="$(find  mastering_ros_robot_description_pkg)/urdf/sensors/xtion_pro_live.urdf.xacro"/>
+
+<!-- ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+  <!-- Transmissions for ROS Control -->
+   <xacro:transmission_block joint_name="shoulder_pan_joint"/>
+   <xacro:transmission_block joint_name="shoulder_pitch_joint"/>
+   <xacro:transmission_block joint_name="elbow_roll_joint"/>
+   <xacro:transmission_block joint_name="elbow_pitch_joint"/>
+   <xacro:transmission_block joint_name="wrist_roll_joint"/>
+   <xacro:transmission_block joint_name="wrist_pitch_joint"/>
+   <xacro:transmission_block joint_name="gripper_roll_joint"/>
+   <xacro:transmission_block joint_name="finger_joint1"/>
+   <xacro:transmission_block joint_name="finger_joint2"/>
+
+  <!-- Define arm with gripper mounted on a base -->
+  <xacro:base name="base"/>
+  <xacro:arm parent="base"/>
+  <xacro:gripper parent="tool"/>
+
+  <!-- Define RGB-D sensor -->
+  <xacro:xtion_pro_live name="rgbd_camera" parent="base">
+    <origin xyz="0.1 0 1" rpy="0 ${75.0 * deg_to_rad} 0"/>
+    <origin xyz="0 0 0" rpy="${-90.0 * deg_to_rad} 0 ${-90.0 * deg_to_rad}"/>
+  </xacro:xtion_pro_live>
+
+  <!-- ros_control plugin -->
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>/seven_dof_arm</robotNamespace>
+    </plugin>
+  </gazebo>
+</robot>
+```
+
+把 xacro  转换为 urdf
+
+1. 命令行中转换
+
+   ```
+   $ rosrun xacro xacro.py pan_tilt.xacro > pan_tilt_generated.urdf
+   ```
+
+2. 在 launch 文件中转换
+
+   参数名为 robot_description，在执行 launch  文件的时候就会加载模型了 
+
+   ```xml
+   <param name="robot_description" command="$(find xacro)/xacro.py
+   $(find mastering_ros_robot_description_pkg)/urdf/pan_tilt.xacro"/>
+   ```
+
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
 #### 使用 pluginlib 创建给计算器应用常见插件
 
 结构图

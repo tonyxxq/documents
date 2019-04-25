@@ -1,6 +1,10 @@
 #### 3D Robot Model
 
+http://www.guyuehome.com/270
+
 https://blog.csdn.net/sunbibei/article/details/53287975
+
+https://blog.csdn.net/dulaiduwangduxing/article/details/45395665
 
 > 使用模型可以在机器人制造之前发现一些致命的缺点，并且可以测试是否能投入使用
 
@@ -10,15 +14,19 @@ ros 建立模型常用的一些包， robot_model，joint_state_publisher，robo
 
 **link**：该标签可以设置连杆的大小、形状、颜色、纹理、惯性矩阵和碰撞属性
 
-**joint**：该标签代表 link 之间的连接点，可以设置移动的限制和速度，有多种不同类型包括，旋转、连续、棱柱、固定、浮动和平面等（revolute, continuous, prismatic, fixed, floating, and planar）
+> collision : 有时候想要靠近敏感设备做严格的运动，比如，我们不想要机器人的头做任何的碰撞，我们或许定义碰撞形状为一个圆柱来包住它的头，从而不让任何东西靠近。 
+>
+> inertial： 惯性张量取决于质量和对象质量的分布，一个好的第一近似值是假设等于质量再体积中的分布，计算惯性张量基于对象的形状。 
+>
+> 注意：collision 和 inertial是必须的，否则 Gazebo 将不会成功的加载模型
+
+**joint**：该标签代表 link 之间的连接点，可以设置移动的限制和速度，有多种不同类型包括，旋转（沿着一个轴转动，旋转角度有限制）、连续（沿着一个轴转动，旋转角度没有限制）、棱柱（沿着一个轴运动）、固定、浮动（在三维空间任意运动）和平面（在平面内运动）
 
 **robot**：该标签封装了整个 robot 模型，内部可以定义 joint 和 link，属性可以定义 robot 的名称
 
 **gazebo**：使用该标签，可以应用 gazeboo 中的插件、材料属性等
 
-更多请参考：http://wiki.ros.org/urdf/XML
-
-注意：collision 和 inertial是必须的，否则 Gazebo 将不会成功的加载模型
+更多请参考：http://wiki.ros.org/urdf/XML 
 
 示例：
 
@@ -227,7 +235,6 @@ This link is the base of the arm in which arm is placed
   </joint>
 
   <link name="bottom_link">
-
     <visual>
       <origin xyz=" 0 0 -0.04"  rpy="0 0 0"/>
       <geometry>
@@ -248,7 +255,6 @@ This link is the base of the arm in which arm is placed
     <material>Gazebo/White</material>
   </gazebo>
 
-
 <!-- ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
 
   <!-- BASE LINK -->
@@ -257,9 +263,7 @@ This link is the base of the arm in which arm is placed
     <visual>
       <origin xyz="0 0 0" rpy="${M_PI/2} 0 0" /> <!-- rotate PI/2 -->
       <geometry>
-
 	       <box size="0.1 0.1 0.1" />
-
       </geometry>
       <material name="White" />
     </visual>
@@ -267,16 +271,13 @@ This link is the base of the arm in which arm is placed
     <collision>
       <origin xyz="0 0 0" rpy="${M_PI/2} 0 0" /> <!-- rotate PI/2 -->
       <geometry>
-
 	       <box size="0.1 0.1 0.1" />
-		
       </geometry>
       </collision>>
 	<xacro:inertial_matrix mass="1"/>
-
   </link>
-
-  <gazebo reference="base_link">
+  
+    <gazebo reference="base_link">
     <material>Gazebo/White</material>
   </gazebo>
 
@@ -294,7 +295,6 @@ This link is the base of the arm in which arm is placed
 
   <!-- SHOULDER PAN LINK -->
   <link name="shoulder_pan_link" >
-
     <visual>
       <origin xyz="0 0 0" rpy="0 ${M_PI/2} 0" />
       <geometry>
@@ -332,9 +332,7 @@ This link is the base of the arm in which arm is placed
     <visual>
       <origin xyz="-0.002 0 0.04" rpy="0 ${M_PI/2} 0" />
       <geometry>
-
            <box size="${shoulder_pitch_len} ${shoulder_pitch_width} ${shoulder_pitch_height}" />
-
       </geometry>
       <material name="White" />
     </visual>
@@ -364,13 +362,10 @@ This link is the base of the arm in which arm is placed
 <!-- ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
   <!-- ELBOW ROLL LINK -->
   <link name="elbow_roll_link" >
-
     <visual>
       <origin xyz="-0.015 0.0 -0.0" rpy="0 ${M_PI/2} 0" />
       <geometry>
-
             <cylinder radius="${elbow_roll_width}" length="${elbow_roll_len}"/>
-
       </geometry>
       <material name="Black" />
     </visual>
@@ -401,7 +396,6 @@ This link is the base of the arm in which arm is placed
 
   <!-- ELBOW PITCH LINK -->
   <link name="elbow_pitch_link" >
-
     <visual>
       <origin xyz="0 0 -0.12" rpy="0 ${M_PI/2} 0" />
       <geometry>
@@ -537,18 +531,15 @@ This link is the base of the arm in which arm is placed
     <dynamics damping="50" friction="1"/>
   </joint>
 
-
 <!-- ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
 
 
   <!-- LEFT GRIPPER AFT LINK -->
   <link name="gripper_finger_link1">
-
      <visual>
       <origin xyz="0.04 -0.03 0"/>
       <geometry>
            <box size="${left_gripper_len} ${left_gripper_width} ${left_gripper_height}" />
-
       </geometry>
       <material name="White" />
     </visual>
@@ -560,7 +551,6 @@ This link is the base of the arm in which arm is placed
   </gazebo>
 
 <!-- Joint between Wrist roll and finger 2 -->
-
   <joint name="finger_joint2" type="prismatic">
     <parent link="gripper_roll_link"/>
     <child link="gripper_finger_link2"/>

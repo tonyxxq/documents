@@ -1,5 +1,7 @@
 ## RNN(Recurrent Neural Network：循环神经网络)
 
+可参考：https://www.jb51.net/article/135642.htm
+
 - 前馈神经网络不考虑数据之间的关联性，网络的输出只和当前时刻网络的输入相关。RNN 是一类用于处理序列数据的神经网络，即考虑了数据的关联性。
 
 - 普通 RNN 结构图

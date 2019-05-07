@@ -100,6 +100,43 @@
 
   同时也可以结合 LSTM 和 GRU 就变成了 BiLSTM  和 BiGRU，并且也可以构建深度双向 RNN 等。
 
+- 创建 LSTM 并初始化状态
+
+  >状态的内容包括：
+  >
+  >1. LSTM 单元的个数
+  >
+  >2. 每个 LSTM 单元包括 cell 和 hidden 两部分
+  >
+  >3. 每个 cell 或 hidden 输入指定批次个数的元素
+  >
+  >4. 批次中的每个元素长度和 LSTM 神经元的长度一致
+  >
+  >   状态一共有四个维度，其中外面两层维度为元组，里面两层元素维度为列表
+  >
+  >   ![](imgs/164.png)
+
+  ```python
+  import tensorflow as tf
+  
+  """
+  输出结果为：
+  (LSTMStateTuple(c=array([[ 0.,  0.,  0.,  0.,  0.],
+         [ 0.,  0.,  0.,  0.,  0.]], dtype=float32), h=array([[ 0.,  0.,  0.,  0.,  0.],
+         [ 0.,  0.,  0.,  0.,  0.]], dtype=float32)), LSTMStateTuple(c=array([[ 0.,  0.,  0.,  0.,  0.],
+         [ 0.,  0.,  0.,  0.,  0.]], dtype=float32), h=array([[ 0.,  0.,  0.,  0.,  0.],
+         [ 0.,  0.,  0.,  0.,  0.]], dtype=float32)))
+  """
+  
+  cell = tf.contrib.rnn.MultiRNNCell([tf.contrib.rnn.BasicLSTMCell(5) for _ in range(2)])
+  
+  initial_state = cell.zero_state(2, tf.float32)
+  
+  with tf.Session() as sess:
+      sess.run(tf.global_variables_initializer())
+      print(sess.run(initial_state))
+  ```
+
 - 使用 Udacity生成电视剧剧本作为实例代码，https://github.com/tonyxxq/tv-script-generation
 
   大概需要实现如下步骤：
@@ -161,7 +198,6 @@
                   '(':"||LeftParentheses||",")":"||RightParentheses||","--":"||Dash||",\
                   '\n':'Return'}
       return tokenize_dict
-  
   ```
 
 - 单词嵌入
@@ -181,6 +217,7 @@
       """
       # 生成一个服从均匀分布的矩阵，行数为单词的个数，列数为每个单词向量的维度
       embedding = tf.Variable(tf.random_uniform((vocab_size, embed_dim), -1, 1))
+      
       # 从 embedding 查找出 input_data 中数字对应单词的向量
       return tf.nn.embedding_lookup(embedding, input_data)
   ```
@@ -205,10 +242,9 @@
       def lstm_cell():
           lstm = tf.contrib.rnn.BasicLSTMCell(rnn_size)
           return lstm
+      
       # 多个 LSTM 单元进行叠加（构建多层的网络，深度学习）
       cell = tf.contrib.rnn.MultiRNNCell([lstm_cell() for _ in range(2)])
-      # 初始状态，因为是按批次进行训练的且当前批次和下一批次相同位置之间是序列关系（比如当前位置的第
-      # 一个单词和下一位置的第一个单词是序列关系），所以需要 batch_size 个状态,（这个地方之前一直没     # 搞明白），tf.identity 是创建一个操作（新建一个结点）
       initial_state = cell.zero_state(batch_size, tf.float32)
       InitailState = tf.identity(initial_state, name='initial_state')
       return cell, InitailState
@@ -226,7 +262,6 @@
       :param inputs: Input text data
       :return: Tuple (Outputs, Final State)
       """
-      # inputs 是一个矩阵，每一行表示一个单词的向量，因为使用的是 RNN，所以这个地方的输入和输出格式     # 是一样的, dynamic_rnn 自动根据输入和输出去设置权重的 shape（我的理解）
       outputs,state= tf.nn.dynamic_rnn(cell, inputs, dtype=tf.float32)
       final_state=tf.identity(state, name='final_state')
       return outputs, final_state
@@ -247,6 +282,7 @@
       """
       embed = get_embed(input_data, vocab_size, embed_dim)
       rnn,finalState = build_rnn(cell, embed)
+      
       # 建立了一个全连接层
       logits = tf.contrib.layers.fully_connected(rnn, vocab_size, activation_fn=None,         \weights_initializer = tf.truncated_normal_initializer(stddev=0.1),
           \biases_initializer=tf.zeros_initializer())
@@ -278,8 +314,10 @@
       """
       # 计算num of batches
       batches = len(int_text)//(batch_size*seq_length)
+      
       # 去掉最后一个批次的数据
       int_text = int_text[:batches*batch_size*seq_length]
+      
       # reshape
       seq_text = np.reshape(int_text,(batch_size,-1))
       arrs = []
@@ -329,7 +367,6 @@
       gradients = optimizer.compute_gradients(cost)
       capped_gradients = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in gradients if grad is not None]
       train_op = optimizer.apply_gradients(capped_gradients)
-  
   ```
 
 - 训练

@@ -163,9 +163,9 @@
 
 - pip 安装时可以设置默认的时间大一点
 
-   ```
+  ```
   pip --default-timeout=100 install -U scikit-learn
-   ```
+  ```
 
 - \_\_repr\_\_和\_\_str\_\_这两个方法都是用于显示的，\_\_str\_\_是面向用户的，而\_\_repr\_\_面向程序员
 
@@ -321,6 +321,12 @@
   for line in file:
     pass # do something
   file.close()
+  
+  # 当读入的文件中包含中文的时候需要加上 encoding='UTF-8'，不然会出现
+  """
+  UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 44: illegal multibyte sequence
+  """
+  file = open(path, "r", encoding='UTF-8')
   ```
 
 - 字符串去掉空格的方法
@@ -393,7 +399,19 @@
   # 输出 1 2 (3, 4, 5)
   ```
 
-  >  \*\*kwargs 打包关键字参数成 dict 给函数体调用
+  >  \* 用于给元组、列表、字典解包
+
+  ```python
+  def test(a, b, c):
+      print(a, b, c)
+  
+  # 下面的都输出 1 2 3
+  test(*[1, 2, 3])
+  test(*(1, 2, 3))
+  test(*{1: "a", 2: "b", 3: "c"})
+  ```
+
+  > \*\*kwargs 打包关键字参数成 dict 给函数体调用
 
   ```python
   def function(**kwargs):

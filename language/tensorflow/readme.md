@@ -349,6 +349,11 @@
   > num_updates：可选，设置这个参数之后，将会通过min(decay, (1 + num_updates) / (10 + num_updates))函数，从中选择最小值做为衰减率。
   >
   > 影子变量：shadow_variable = decay * shadow_variable + (1-decay) * variable
+  >
+  > 1. 训练阶段：为每个可训练的权重维护影子变量，并随着迭代的进行更新
+  > 2.  预测阶段：使用影子变量替代真实变量值，进行预测
+  >
+  > 预测和训练阶段分别是两个前向传播网络
 
   ```python
   # 定义一个变量用于计算滑动平均，变量的初始值为 0，变量的类型必须是实数
@@ -403,6 +408,34 @@
   with tf.Session() as sess:
     tf.global_variables_initializer().run()
     sess.run(updated_weight, feed_dict={...}) # 这样每次得到的都是更新后的weight
+  ```
+
+- 学习率衰减
+
+  > 常用的学习率衰减方式，参考
+  >
+  > https://blog.csdn.net/zxyhhjs2017/article/details/82383723
+  >
+  > 其中指数衰减公式：
+  >
+  > decayed_learning_rate = learning_rate * decay_rate ^ (global_step / decay_steps)  
+  >
+  > global_step：训练的步数，递增
+  >
+  > decay_steps：指定步数更新学习率
+  >
+  > decay_rate ：学习率衰减的底数
+  >
+  > staircase：更新是否连续，当为 True 的时候每一步都更新，否则得等 decay_steps 步才更新
+
+  ```python
+  learning_rate = tf.train.exponential_decay(
+      0.001,
+      global_step,
+      200,
+      0.99,
+      staircase=True
+  )
   ```
 
 - tf.clip_by_global_norm

@@ -438,6 +438,43 @@
   )
   ```
 
+- tf.transpose
+
+  > 指定维度空间的数据互换和 numpy 的 transpose 一致
+  >
+  > transpose 的参数 perm （第二个参数）表示要互换的轴
+  >
+  > 可以使用元素索引的方式理解变换的过程
+  >
+  > 如下使用（1， 0,  2）转换，那么变换之后的向量和原始的向量之间存在对应关系，例如：原始向量位置为（1， 0， 1）的元素，变换后对应到新的向量的的位置为（0, 1，1），可以发现相同的元素，索引地址发生了变化
+
+  ```python
+  sess = tf.InteractiveSession()
+  
+  x = tf.linspace(1.0, 12.0, 12)
+  y = tf.reshape(x, (2, 2, 3))
+  
+  z = tf.transpose(y, (1, 0, 2))
+  
+  print(sess.run(y))
+  print(sess.run(z))
+  ```
+
+  输出为：
+
+  ```
+  [[[  1.   2.   3.]
+    [  4.   5.   6.]]
+  
+   [[  7.   8.   9.]
+    [ 10.  11.  12.]]]
+  [[[  1.   2.   3.]
+    [  7.   8.   9.]]
+  
+   [[  4.   5.   6.]
+    [ 10.  11.  12.]]]
+  ```
+
 - tf.clip_by_global_norm
 
   > 在前向传播与反向传播之后，我们会得到每个权重的梯度 diff，权重可能会很大（梯度爆炸）。求得所有权重的和的平方根 global_norm 和 clip_norm 比较，如果 global_norm > clip_norm , 则让每一个权重乘以 clip_norm / global_norm，这个数是大于 0 小于 1 的，**这样就把梯度变化很大的权重缩小，降低了梯度爆炸的可能**
@@ -446,10 +483,6 @@
   # clip_norm 表示截取的比率
   tf.clip_by_global_norm(t_list, clip_norm, use_norm=None, name=None) 
   ```
-
-  
-
-  
 
   
 

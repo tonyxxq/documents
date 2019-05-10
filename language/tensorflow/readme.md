@@ -484,6 +484,105 @@
   tf.clip_by_global_norm(t_list, clip_norm, use_norm=None, name=None) 
   ```
 
+- tf.squeeze
+
+  > 从张量形状中移除所有大小为1的维度
+
+  ```python
+  sess = tf.InteractiveSession()
+  
+  x = tf.constant([[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]])
+  print("before shape：", x.get_shape())
+  print(sess.run(x))
+  
+  y = tf.squeeze(x)
+  print("after shape：", y.get_shape())
+  print(sess.run(y))
+  
+  # 也可指定要移除的维度
+  z = tf.squeeze(x, [0])
+  print(sess.run(z))
+  ```
+
+  输出为：
+
+  ```
+  before shape： (1, 1, 3, 3)
+  [[[[1 2 3]
+     [4 5 6]
+     [7 8 9]]]]
+  after shape： (3, 3)
+  [[1 2 3]
+   [4 5 6]
+   [7 8 9]]
+  [[[1 2 3]
+    [4 5 6]
+    [7 8 9]]]
+  ```
+
+- 1 x 1 卷积核的作用
+
+  > 1. 实现跨通道的交互和信息整合（把每个通道的只进行了相加操作）
+  > 2. 进行卷积核通道数的降维和升维
+
+- 同时 shuffle 两个列表且保持两个列表的对应关系
+
+  > 常用于 shuffle 训练数据的输入和标签
+
+  ```python
+  import random
+  
+  x = [1, 2, 3]
+  y = [4, 5, 6]
+  
+  randnum = random.randint(0, 100)
+  random.seed(randnum)
+  random.shuffle(x)
+  
+  random.seed(randnum)
+  random.shuffle(y)
+  
+  print(x, y)
+  ```
+
+  输出为：
+
+  ```
+  [2, 3, 1] [5, 6, 4]
+  ```
+
+- 提高模型泛化能力和防止过拟合的一些技巧
+
+  > 参考：https://blog.csdn.net/u012968002/article/details/55212082
+
+- tf.shape
+
+  ```python
+  sess = tf.InteractiveSession()
+  
+  x1 = tf.constant([[1, 2, 3, 4], [1, 2, 3, 4]])
+  x2 = tf.constant([4, 5, 6, 7])
+  
+  # 输出的 tensor，需要 sess 才可得到 shape
+  print(tf.shape(x1))
+  print(sess.run(tf.shape(x1)))
+  
+  # 输出的是 TensorShape 对象，不用 sess 就可以输出得到 shape
+  print(x1.get_shape())
+  print(x1.get_shape().as_list())
+  print(type(x1.get_shape()))
+  ```
+
+  输出为：
+
+  ```
+  Tensor("Shape:0", shape=(2,), dtype=int32)
+  [2 4]
+  (2, 4)
+  [2, 4]
+  <class 'tensorflow.python.framework.tensor_shape.TensorShape'>
+  ```
+
   
 
   

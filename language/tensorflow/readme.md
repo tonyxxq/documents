@@ -583,6 +583,121 @@
   <class 'tensorflow.python.framework.tensor_shape.TensorShape'>
   ```
 
-  
+- name_scope 和 variable_scope
 
-  
+  1. 在 name_scope 下 get_variable 没有加上 name_scope 作为前缀，Variable 加上了 name_scope 作为前缀
+
+     ```python
+     with tf.name_scope("scope1"):
+         v1 = tf.get_variable(name="v1", dtype=tf.float32, shape=[1, 1], initializer=tf.truncated_normal_initializer)
+         v2 = tf.Variable(tf.truncated_normal([1, 1], stddev=0.1))
+     
+     print(v1.name)
+     print(v2.name)
+     ```
+
+     输出为：
+
+     ```
+     v1:0
+     scope1/Variable:0
+     ```
+
+  2. 在 variable_scope 下 get_variable 和 Variable 都加上了 variable_scope 作为前缀
+
+     ```python
+     with tf.variable_scope("scope1"):
+         v1 = tf.get_variable(name="v1", dtype=tf.float32, shape=[1, 1], initializer=tf.truncated_normal_initializer)
+         v2 = tf.Variable(tf.truncated_normal([1, 1], stddev=0.1), name="v2")
+     
+     print(v1.name)
+     print(v2.name)
+     ```
+
+     输出为：
+
+     ```
+     scope1/v1:0
+     scope1/v2:0
+     ```
+
+  3. get_variable 新建变量如果遇见重复的 name 则会因为重复而报错，variable 新建的变量如果遇见重复的 name 则会自动修改前缀，以避免重复出现，所以 Variable 不能获取变量，只能创建新的变量
+
+     ```python
+     with tf.variable_scope("scope1"):
+         v1 = tf.get_variable(name="v1", dtype=tf.float32, shape=[1, 1], initializer=tf.truncated_normal_initializer)
+         # 这步会报错
+         # v2 = tf.get_variable(name="v1", dtype=tf.float32, shape=[1, 1], initializer=tf.truncated_normal_initializer)
+         v3 = tf.Variable(tf.truncated_normal([1, 1], stddev=0.1), name="v1")
+         print(v1.name)
+         # print(v2.name)
+         print(v3.name)
+     ```
+
+     输出为：
+
+     ```
+     scope1/v1:0
+     scope1/v1_1:0
+     ```
+
+  4. reuse 参数
+
+     > 在使用 get_variable 时 
+     >
+     > reuse = False 表示创建变量
+     >
+     > reuse = True 表示使用变量，如果变量不存在会报错
+
+     ```python
+     with tf.variable_scope("scope", reuse=False):
+         v1 = tf.get_variable(name="v1", dtype=tf.float32, shape=[1, 1], initializer=tf.truncated_normal_initializer)
+     
+     with tf.variable_scope("scope", reuse=True):
+         v2 = tf.get_variable(name="v1", dtype=tf.float32, shape=[1, 1], initializer=tf.truncated_normal_initializer)
+     
+     print(v1.name)
+     print(v2.name)
+     ```
+
+     输出为：
+
+     ```
+     scope/v1:0
+     scope/v1:0
+     ```
+
+  5. 把一个变量赋值给另一个变量，赋给的是引用地址，所以修改的还是相同的地址空间的数据
+
+     ```python
+     sess = tf.InteractiveSession()
+     
+     x1 = tf.Variable(tf.constant(0))
+     x2 = x1
+     
+     print(x1.name)
+     print(x2.name)
+     
+     sess.run(tf.global_variables_initializer())
+     print(x1.eval())
+     print(x2.eval())
+     
+     tf.assign(x1, 1).eval()
+     print(x1.eval())
+     print(x2.eval())
+     ```
+
+     输出为：
+
+     ```
+     Variable:0
+     Variable:0
+     0
+     0
+     1
+     1
+     ```
+
+- tensorboard 
+
+  <a href="tensorboard .md">tensorboard </a>

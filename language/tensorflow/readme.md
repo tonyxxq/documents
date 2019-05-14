@@ -704,4 +704,55 @@
 
 - 文件读取框架
 
+  > 这部分还需要更新......
+
+  ```python
+  conv2d_transpose# 把路径下的每一个文件的路径加到 list
+  file_paths = []
+  for root, dirs, files in os.walk('imgs', topdown=True):
+      for file in files:
+          file_paths.append(os.path.join(root, file))
   
+  files_queue = tf.train.string_input_producer(file_paths, capacity=100, num_epochs=10, shuffle=False)
+  reader = tf.WholeFileReader()
+  key, image = reader.read(files_queue)
+  image_ = tf.image.decode_jpeg(image)
+  
+  with tf.Session() as sess:
+      tf.local_variables_initializer().run()
+      # 必须执行 start_queue_runners
+      coord = tf.train.Coordinator()
+      threads = tf.train.start_queue_runners(sess=sess, coord=coord)
+      for i in range(5):
+          plt.imshow(image_.eval())
+          plt.show()
+  ```
+
+- tf.conv2d_transpose()  转置卷积
+
+  > 第一个参数 value：指需要做反卷积的输入图像，它要求是一个 Tensor
+  > 第二个参数 filter：卷积核，它要求是一个Tensor，具有[filter_height, filter_width, out_channels, in_channels]这样的shape，具体含义是[卷积核的高度，卷积核的宽度，卷积核个数，图像通道数]
+  > 第三个参数 output_shape：反卷积操作输出的shape，细心的同学会发现卷积操作是没有这个参数的.
+  > 第四个参数 strides：反卷积时在图像每一维的步长，这是一个一维的向量，长度 4
+  > 第五个参数 padding：string类型的量，只能是"SAME","VALID"其中之一，这个值决定了不同的卷积方式
+  >
+  > 第六个参数 data_format：string类型的量，'NHWC'和'NCHW'其中之一，这是tensorflow新版本中新加的参数，它说明了value参数的数据格式。'NHWC'指tensorflow标准的数据格式[batch, height, width, in_channels]，'NCHW'指Theano的数据格式,[batch, in_channels，height, width]，当然默认值是'NHWC'
+  >
+  > 图像被 strides 先放大，再进行卷积运算
+
+  ```python
+  # 输入：1张图片，尺寸28*28 高宽，通道数3
+  x = np.ones((1, 28, 28, 3), dtype=np.float32)
+  
+  # 卷积核尺寸 4x4 ，5表输出通道数，3代表输入通道数
+  w = np.ones((4, 4, 5, 3), dtype=np.float32)
+  
+  #扩大 2 倍
+  output = tf.nn.conv2d_transpose(x, w, (1, 56, 56, 5), [1, 2, 2, 1], padding='SAME')
+  
+  with tf.Session() as sess:
+      m = sess.run(output)
+      print(m.shape)
+  ```
+
+- 

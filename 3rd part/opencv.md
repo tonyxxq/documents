@@ -210,9 +210,30 @@
       <img src="imgs/7.jpg">
   </center>
 
+- 图像叠加
+
+  ```python
+  # 图像进行叠加
+  # 注意：图像叠加必须有相同的大小
+  img2 = cv2.imread("2.jpg")
+  img2 = cv2.resize(img2, (50, 50))
   
+  # 找到底图的 ROI，把 img2 叠加到 img 的正中间
+  img_shape = img.shape
+  img2_shape = img2.shape
+  roi_img = img[img_shape[0] // 2 - img2_shape[0] // 2:img_shape[0] // 2 + img2_shape[0] // 2, img_shape[1] // 2 - img2_shape[1] // 2:img_shape[1] // 2 + img2_shape[1] // 2]
+  cv2.addWeighted(roi_img, .5, img2, .8, 0., roi_img)
+  
+  show_img("new_img", img)
+  cv2.imwrite("new_img.jpg", img)
+  ```
+
+  <center>
+      <img src="imgs/1.jpg">
+      <img src="imgs/13.jpg">
+      <img src="imgs/12.jpg">
+  </center>
 
   
 
-  
 

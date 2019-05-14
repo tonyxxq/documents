@@ -58,7 +58,7 @@
 
 - python 模块是一个 Python 文件，以 .py 结尾
 
-- help() 函数    
+- help() 函数
 
   ```python
   help(max)
@@ -448,3 +448,44 @@
   t1.start()
   t2.start()
   ```
+
+- 文件遍历 os.walk() 与 os.listdir()
+
+  目录结构：
+
+  ![](imgs/2.png)
+
+  > os.listdir() 输出当前文件夹下的子文件夹和文件
+  >
+  > 不会遍历子文件夹下的文件
+
+  ```python
+  print(os.listdir("imgs"))
+  ```
+
+  输出为：
+
+  ```
+  ['1.jpg', '10.jpg', '11.jpg', '12.jpg', '13.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg', '6.jpg', '7.jpg', '8.jpg', '9.jpg', 'd']
+  ```
+
+  > os.walk()  ，不仅遍历当前文件夹还遍历文件夹下的子文件夹
+  >
+  > root 表示根目录，即当前目录，dirs 表示子文件夹， files 文件
+  >
+  > topdown  True ：由外向内遍历，False：由内向外遍历
+
+  ```python
+  for root, dirs, files in os.walk('imgs', topdown=True):
+      print(files, dirs, root)
+  ```
+
+  输出为：
+
+  ```
+  ['1.jpg', '10.jpg', '11.jpg', '12.jpg', '13.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg', '6.jpg', '7.jpg', '8.jpg', '9.jpg'] ['d'] imgs
+  [] ['b'] imgs\d
+  ['1.jpg', '2.jpg', '3.jpg'] [] imgs\d\b
+  ```
+
+  

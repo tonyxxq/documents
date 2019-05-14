@@ -35,5 +35,43 @@
 
 5. 在文字前边添加 > 可以添加竖线
 
-   > ​
+   > 
+
+6. 多张图片并列
+
+   > 居中显示使用 center  标签 否则使用 figure 标签
+   >
+   > class="half" 两张并列
+   >
+   > class="third"  三张并列
+   >
+   > 
+
+   - 两张或三张并排显示
+
+     ```html
+     <figure >
+         <img src="http://xxx.jpg">
+         <img src="http://yyy.jpg">
+     </figure>
+     ```
+
+   - 固定宽度，并排显示并居中
+
+     ```html
+     <center>
+         <img src="http://xxx.jpg" width="300"/>
+         <img src="http://yyy.jpg" width="300"/>
+     </center>
+     ```
+
+     
+
+     
+
+     
+
+     
+
+     
 

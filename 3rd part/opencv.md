@@ -61,7 +61,7 @@
   > 参数7：字体粗细
 
   ```python
-  cv2.putText(img, "good", (50, 50), cv2.FONT_ITALIC, 0.8, (0, 0, 0), 2)
+  cv2.putText(img, "good house", (50, 50), cv2.FONT_ITALIC, 0.8, (0, 0, 0), 2)
   ```
 
   <center>
@@ -131,7 +131,7 @@
   > scale 参数表示对图像的放大缩小
 
   ```python
-  rotateMatrix = cv2.getRotationMatrix2D(center=(img.shape[1] / 2, img.shape[0] / 2), angle=-90, scale=1)
+  rotateMatrix = cv2.getRotationMatrix2D(center=(img.shape[1] / 2, img.shape[0] / 2), angle=-90, scale=0.5)
   rotImg = cv2.warpAffine(img, rotateMatrix, (img.shape[1], img.shape[0]))
   cv2.imshow("ff", rotImg)
   ```
@@ -180,14 +180,14 @@
           cX = int(M["m10"] / M["m00"])
           cY = int(M["m01"] / M["m00"])
   
-          # 在轮廓中兴中心写上标签值
+          # 在轮廓中心写上标签值
           # cv2.circle(img, (cX, cY), 7, (255, 255, 255), -1)
           cv2.putText(img, str(idx), (cX, cY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 1)
   
   # 在图像上添加边框
   # 第一个参数表示需要添加轮廓的图像，可以是彩色图片
   # 第二个参数表示轮廓列表
-  # 第三个表示需要天机的轮廓的 id，-1 表示添加所有
+  # 第三个表示需要添加的轮廓的 id，-1 表示添加所有
   # 第四个参数表示线条的粗细
   cv2.drawContours(img, contours, -1, (0, 255, 255), 2)
   
@@ -233,7 +233,7 @@
       <img src="imgs/13.jpg">
       <img src="imgs/12.jpg">
   </center>
-
   
+
 
 

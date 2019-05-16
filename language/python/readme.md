@@ -1,3 +1,40 @@
+- 在 linux 平台， python 文件中加上如下注释，并授给执行权限，就能直接运行 .py 文件了
+
+  ```
+  #!/usr/bin/env python3
+  ```
+
+- ascii, unicode， utf-8 的关系
+
+  > ascii 是最早的计算机编码，只能表示 127 个字符，包括大小写英文字母、数字和一些符号
+  >
+  > 后来为了支持中文中国制定了`GB2312`， 两个字节
+  >
+  > 再后来为了统一各个国家的文字编码，使用 Unicode， 常用两个自己，生僻的 4 个字节
+  >
+  > 最后为了节省空间，因为有的字符比如字母和数字是一个字节，用 Unicode 两个字节存储浪费空间，所以诞生了 utf-8 编码，会调节编码长度，且和 ascii 编码不冲突
+
+- 列表和元组的区别
+
+  元组的中的元素是不能修改的（保证安全性），但是如果元组内部的 list 是可以修改
+
+  ```python
+  # 下面语句是正确的
+  a = (1, 2, [1, 2, 3])
+  a[2][0] = 2
+  
+  # 下面语句是错误的
+  b = (1, 2, [1, 2, 3])
+  b[1] = 2
+  ```
+
+- 多行输出字符串，使用 ''''''
+
+  ```python
+  print(r'''hello,\n
+  world''')
+  ```
+
 - map 函数 
 
   接收一个函数和一个或多个 list 返回一个 list (没有去掉元素)
@@ -244,6 +281,20 @@
          print(i)
      ```
 
+  3. 简单的生成器
+
+     ```python
+     xx = (x for x in range(10))
+     
+     # 一般不会用 next 来获取生成器的值
+     print(next(xx))
+     print(next(xx))
+     
+     # 一般用 for 循环的方式
+     for n in xx:
+         print(n)
+     ```
+
 - 判断当前文件夹下的文件或文件夹是否存在
 
   ```python
@@ -487,6 +538,111 @@
   ['1.jpg', '10.jpg', '11.jpg', '12.jpg', '13.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg', '6.jpg', '7.jpg', '8.jpg', '9.jpg'] ['d'] imgs
   [] ['b'] imgs\d
   ['1.jpg', '2.jpg', '3.jpg'] [] imgs\d\b
+  ```
+
+- global 和 nonlocal，闭包
+
+  > 在函数累不修改全局变量的时候必须加上 global
+  >
+  > 在函数内部修改外部函数非全局变量的时候必须加上 nonlocal
+  >
+  > 闭包的作用是保存函数的状态信息，使函数的局部变量信息依然可以保存下来
+  >
+  > 返回闭包时牢记一点：返回函数不要引用任何循环变量，或者后续会发生变化的变量。
+
+  1. 修改全局变量必须使用 global
+
+     ```python
+     gcount = 0
+      
+     def global_test():
+         global  gcount
+         gcount+=1
+         print (gcount)
+     global_test()
+     ```
+
+  2. 修改非全局变量的外部变量，使用 nonlocal
+
+     > 闭包的作用是在
+
+     ```python
+     def Maker(step):
+         num = 1
+         def fun1():
+             nonlocal num # 不然 num 是不允许修改的
+             num = num + step
+             print(num)
+         return fun1
+     
+     j = 1
+     func2 = Maker(3)  # 调用外部包装器
+     while j < 5:
+         func2()  # 调用内部函数4次 输出的结果是 4、7、10、13
+         j += 1
+     ```
+
+- 装饰器
+
+  参考：https://www.cnblogs.com/cicaday/p/python-decorator.html
+
+  不带参数
+
+  ```python
+  def debug(func):
+      def wrapper(*args, **kws):
+          print("进入方法：{}".format(func.__name__))
+          return func(*args)
+      return wrapper
+  
+  @debug
+  def say_goodbye(name):
+      print(name, "hello!")
+  
+  say_goodbye("tony")
+  ```
+
+  带参数的， 比不带参数的多了一层
+
+  ```python
+  def debug(level):
+      def wrapper(func):
+          def inner_wrapper(*args, **kws):
+              print(level, "进入方法：{}".format(func.__name__))
+              return func(*args)
+          return inner_wrapper
+      return wrapper
+  
+  # 等价于 debug('warn')(say_goodbye)
+  @debug(level="warn")
+  def say_goodbye(name):
+      print(name, "hello!")
+  
+  say_goodbye("tony")
+  ```
+
+- 打印命令行输入的参数
+
+  ```python
+  import sys
+  
+  def print_argv():
+      print(sys.argv)
+  
+  if __name__ == '__main__':
+      print_argv()
+  ```
+
+  命令行输入
+
+  ```
+  python pc.py tony
+  ```
+
+  结果，第一个为文件名称，后面的为参数
+
+  ```
+  ['pc.py', 'tony']
   ```
 
   

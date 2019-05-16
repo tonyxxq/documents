@@ -645,4 +645,14 @@
   ['pc.py', 'tony']
   ```
 
+- 模块搜索路径
+
+  ```python
+  import sys
   
+  # 查看所有搜索目录
+  print(sys.path)
+  
+  # 也可以添加自己的搜索目录，只对运行时有效
+  sys.path.append('/Users/michael/my_py_scripts')
+  ```

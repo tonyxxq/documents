@@ -118,6 +118,41 @@
   print(dir(l))
   ```
 
+  仅仅把属性和方法列出来是不够的，配合`getattr()`、`setattr()`以及`hasattr()`，我们可以直接操作一个对象的状态
+
+  注意：只有在不知道对象信息的时候，我们才会去获取对象信息
+
+  ```python
+  class MyObject(object):
+       def __init__(self):
+           self.x = 9
+       def power(self):
+           return self.x * self.x
+  
+  obj = MyObject()
+  
+  hasattr(obj, 'x') # 有属性'x'吗？
+  # True
+  obj.x
+  # 9
+  hasattr(obj, 'y') # 有属性'y'吗？
+  #False
+  setattr(obj, 'y', 19) # 设置一个属性'y'
+  hasattr(obj, 'y') # 有属性'y'吗？
+  # True
+  getattr(obj, 'y') # 获取属性'y'
+  # 19
+  obj.y # 获取属性'y'
+  # 19
+  getattr(obj, 'z', 404) # 不存在设置一个默认值
+  
+  hasattr(obj, 'power') # 有属性'power'吗？
+  # True
+  fn = getattr(obj, 'power') # 获取属性'power'并赋值到变量fn
+  fn() # 调用fn()与调用obj.power()是一样的
+  # 81
+  ```
+
 - \_\_doc\_\_函数，查看模块的文档
 
   ```python
@@ -656,3 +691,201 @@
   # 也可以添加自己的搜索目录，只对运行时有效
   sys.path.append('/Users/michael/my_py_scripts')
   ```
+
+- 内部属性不让外部访问
+
+  > 给属性前加上 \_\_
+  >
+  > 注意：像 \_\_name\_\_ 这样的变量，是特殊变量，外部是可以访问的
+  >
+  > 如果外部需要访问 \_\_name 这样的变量，使用 get  set  方法，**set get 方法可以增加一些判断逻辑**
+  >
+  > __name 外部是可以访问的，编译器会在前面加上类名比如：\_Student\_\_name，所以最好不要直接访问
+
+  ```python
+  class Student(object):
+  
+      def __init__(self, name, score):
+          self.__name = name
+          self.__score = score
+  
+      def print_score(self):
+          print('%s: %s' % (self.__name, self.__score))
+  
+      def get_name(self):
+          return self.__name
+  
+      def set_name(self, name):
+          self.__name = name
+  
+  student = Student("tony", 12)
+  print(student.get_name())
+  student.set_name("mical")
+  print(student.get_name())
+  ```
+
+- 多态
+
+  > 参数如果是父类，那么子类也可以作为参数，且子类作为参数的时候是调用子类的方法，所以子类的方法不同实现，会得到不同的结果
+  >
+  > 其实并不一定要继承，只要类中有相应的方法，都是可以作为参数传递的
+
+  ```python
+  class Animal(object):
+      def run(self):
+          print("animal is running")
+  
+  class Dog(Animal):
+      def run(self):
+          print("dog is running")
+  
+  class Cat(Animal):
+      def run(self):
+          print("cat is running")
+          
+  class Fish(object):
+      def run(self):
+          print("fish is running")
+          
+  def run(animal):
+      animal.run()
+  
+  run(Animal())
+  run(Dog())
+  run(Cat())
+  run(Fish())
+  ```
+
+   输出：
+
+  ```
+  animal is running
+  dog is running
+  cat is running
+  fish is running
+  ```
+
+- 判断类型
+
+  > 能用`type()`判断的基本类型也可以用`isinstance()`判断
+
+  ```python
+  class Animal(object):
+      pass
+  
+  class Dog(Animal):
+      pass
+  
+  class Fish(object):
+      pass
+  
+  print(type(1) == int)
+  print(type(Animal()) == Animal)
+  print(isinstance(Dog(), Animal))
+  print(isinstance(Dog(), Fish))
+  
+  # 判断是否为其中某一种
+  print(isinstance(Animal(), (Fish, Animal)))
+  ```
+
+  > 判断是否是函数使用 `types` 模块中定义的常量
+
+  ```python
+  import types
+  
+  def fn():
+      pass
+  
+  print(type(fn) == types.FunctionType)
+  print(type(abs) == types.BuiltinFunctionType)
+  print(type(lambda x: x) == types.LambdaType)
+  print(type((x for x in range(10))) == types.GeneratorType)
+  ```
+
+  输出为：
+
+  ```
+  True
+  True
+  True
+  True
+  ```
+
+- 类属性和实例属性的区别
+
+  > 类属性是所有的实例共有的，而实例属性只有当前实例所有
+
+  ```python
+  class Student(object):
+      # 类属性
+      count = 0
+  
+      def __init__(self, name):
+          # 实例属性
+          self.name = name
+  
+          Student.count += 1
+  
+  # 每创建一个实例，count 加 1
+  s1 = Student("tony")
+  s2 = Student("tom")
+  s3 = Student("job")
+  print(Student.count)
+  ```
+
+- \_\_slot\_\_
+
+  > 设置类可以绑定的属性和方法名称，之后对所有的实例都起作用
+  >
+  > 注意：对继承该类的子类是不起作用的
+
+  ```python
+  class Student(object):
+      __slots__ = ('name', 'age') # 用 tuple 定义允许绑定的属性名称
+  
+  s = Student() # 创建新的实例
+  s.name = 'Michael' # 绑定属性'name'
+  s.age = 25 # 绑定属性'age'
+  
+  s.score = 99 # 绑定属性'score',由于没有这个 slot 没有这个属性所以会报错
+  ```
+
+- @property
+
+  > 
+
+  ```python
+  class Student(object):
+      
+      @property
+      def score(self):
+          return self._score
+  
+      @score.setter
+      def score(self, value):
+          if not isinstance(value, int):
+              raise ValueError('score must be an integer!')
+          if value < 0 or value > 100:
+              raise ValueError('score must between 0 ~ 100!')
+          self._score = value
+  ```
+
+  
+
+- 
+
+  > 
+
+  ```python
+  
+  ```
+
+  
+
+  
+
+  
+
+  
+
+  

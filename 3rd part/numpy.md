@@ -372,7 +372,7 @@
          [ 8,  9, 10, 11]])
   ```
 
-- numpy.vstack(arrays, axis)，水平堆叠，维度不变（类似 concatenate）
+- numpy.hstack(arrays, axis)，水平堆叠，维度不变（类似 concatenate）
 
   ```python
   a = np.arange(0, 12).reshape(3, 4)
@@ -569,4 +569,362 @@
   [3 2 2 1 1 1]
   ```
 
+- char 字符串操作
+
+  ```python
+  # np.char.add 对字符相应位置上的元素进行拼接
+  print(np.char.add(['hello', 'hi'],[' abc', ' xyz']))
   
+  # np.char.multiply 对数组中的每个字符串元素，执行多重连接
+  print(np.char.multiply(['Runoob', 'tony'], 3))
+  
+  # np.char.center 字符居中
+  # str: 字符串，width: 长度，fillchar: 填充字符
+  print(np.char.center('Runoob', 20,fillchar = '*'))
+  
+  # numpy.char.capitalize()第一个字母大写
+  # numpy.char.title() 字符串中的所有单词的第一个字母大写
+  # numpy.char.lower()
+  # numpy.char.upper()
+  # numpy.char.strip()
+  # numpy.char.join()
+  # np.char.split()
+  # numpy.char.replace()
+  # numpy.char.encode()
+  # numpy.char.decode()
+  ```
+
+  输出：
+
+  ```
+  ['hello abc' 'hi xyz']
+  ['RunoobRunoobRunoob' 'tonytonytony']
+  *******Runoob*******
+  ```
+
+- 加/减/乘/除/余
+
+  ```python
+  # 数组间的加/减/乘/除/余
+  # numpy.add(a,b)
+  # numpy.subtract(a,b)
+  # numpy.multiply(a,b)
+  # numpy.divide(a,b)
+  # numpy.mod(a,b)
+  
+  # 单个数组求指数/倒数
+  # numpy.power()
+  # numpy.reciprocal() 
+  ```
+
+- 统计相关
+
+  ```python
+  # 统计相关的函数
+  # numpy.amin() 用于计算数组中的元素沿指定轴的最小值, 可用 min 替代
+  # numpy.amax() 用于计算数组中的元素沿指定轴的最大值，可用 max 替代
+  a = np.array([[3,7,5],[8,4,3],[2,4,9]])  
+  print(a, '\n')
+  
+  print(np.amin(a, axis=1))
+  print(np.amax(a, axis=0), '\n')
+  
+  print(np.min(a,  axis=1))
+  print(np.max(a,  axis=0), '\n')
+  
+  # numpy.ptp() 计算最大值和最小值的差, 也可以指定 axis
+  print(np.ptp(a))
+  print(np.ptp(a, axis=0), '\n')
+  
+  # numpy.median() 中位数
+  # numpy.mean() 均值
+  # numpy.std() 标准差 
+  # numpy.var() 方差
+  # numpy.average() 加权平均值，当没有设置权重的时候和 mean 一样， returned =  True表示返回权重的和
+  print (np.average([1, 2, 3, 4], weights = [4,3,2,1], returned =  True))
+  # 可以指定具体的轴
+  print(np.average(a, axis = 1, weights = [0.1, 0.5, 0.4]))
+  ```
+
+  输出：
+
+  ```
+  [[3 7 5]
+   [8 4 3]
+   [2 4 9]] 
+  
+  [3 3 2]
+  [8 7 9] 
+  
+  [3 3 2]
+  [8 7 9] 
+  
+  7
+  [6 3 6] 
+  
+  (2.0, 10.0)
+  [ 5.8  4.   5.8]
+  ```
+
+- 排序
+
+  ```python
+  # 排序 numpy.sort(a, axis, kind, order), 生成新的数组
+  # order 排序的字段; kind 可选 quicksort(默认) mergesort heapsort
+  a = np.array([[3,7,5],[8,4,3],[2,4,9]])
+  print(a)
+  print(np.sort(a, axis=0, kind='mergesort'), '\n')
+  
+  dt = np.dtype([('name', 'U20'), ('age', 'i1')])
+  b = np.array([('lixue', 20), ('tony', 30), ('tom', 10)], dtype=dt)
+  b = np.sort(b, order='age')
+  print(b, '\n')
+  
+  # argsort, 返回排序后对应之前数组的下标值
+  c = np.array([[3,7,5],[8,4,3],[2,4,9]])
+  print(c)
+  c = np.argsort(c)
+  print(c, '\n')
+  
+  # lexsort 多个序列排序，后面的优先考率
+  nm =  ('raju','anil','ravi', 'amar', 'amar')
+  dv =  ('f.y.',  's.y.',  's.y.',  'f.y.', 'f.x')
+  ind = np.lexsort((dv, nm))# 当 nm 一致时，按 dv 排序
+  print(ind)
+  print([nm[i]  +  ", "  + dv[i]  for i in ind], '\n')
+  
+  # numpy.argmax()和 numpy.argmin()分别沿给定轴返回最大和最小元素的索引
+  a = np.array([[3,7,5],[8,4,3],[2,4,9]])
+  maxindex = np.argmax(a, axis=1)
+  minindex = np.argmin(a, axis=1)
+  print(maxindex, minindex, '\n')
+  
+  # numpy.nonzero() 返回输入数组中非零元素的索引
+  a = np.array([[0, 0, 5], [0, 0, 0], [2, 4, 9]])
+  print(np.nonzero(a), '\n')
+  
+  # numpy.where(condition, x, y) 返回输入数组中满足给定条件的元素的索引, 满足条件(condition)，输出x，不满足输出y
+  dt = np.dtype([('name', 'U20'), ('age', 'i1')])
+  b = np.array([('lixue', 20), ('tony', 30), ('tom', 10)], dtype=dt)
+  print(np.where(b['name'] == 'lixue'), '\n')
+  
+  # numpy.extract() 根据某个条件从数组中抽取元素，返回满条件的元素, 结果变成了一维数组
+  x = np.arange(9.).reshape(3,  3)  
+  print (np.extract(np.mod(x, 2)  ==  0  , x))
+  ```
+
+  输出：
+
+  ```
+  [[3 7 5]
+   [8 4 3]
+   [2 4 9]]
+  [[2 4 3]
+   [3 4 5]
+   [8 7 9]] 
+  
+  [('tom', 10) ('lixue', 20) ('tony', 30)] 
+  
+  [[3 7 5]
+   [8 4 3]
+   [2 4 9]]
+  [[0 2 1]
+   [2 1 0]
+   [0 1 2]] 
+  
+  [4 3 1 0 2]
+  ['amar, f.x', 'amar, f.y.', 'anil, s.y.', 'raju, f.y.', 'ravi, s.y.'] 
+  
+  [1 0 2] [0 2 0] 
+  
+  (array([0, 2, 2, 2]), array([2, 0, 1, 2])) 
+  
+  (array([0]),) 
+  
+  [ 0.  2.  4.  6.  8.]
+  ```
+
+- 完全不拷贝/视图/副本
+
+  ```python
+  a = np.arange(1, 7).reshape(3, 2)
+  print(a)
+  
+  # 完全不拷贝
+  b = a
+  print(id(a))
+  print(id(b), '\n')
+  
+  # ndarray.view() 视图，视图可以共享数据，切片就是试图
+  c = a.view()
+  print(id(a))
+  print(id(c))
+  c[0:1, :] = 1
+  c = np.reshape(c, (2, 3)) # 改变试视图形状原始形状不会改变
+  print(c, '\n', a, '\n')
+  
+  # ndarray.copy() 创建一个副本
+  a = np.array([[10,10],  [2,3],  [4,5]])  
+  b = a.copy()
+  print(id(a))
+  print(id(b))
+  ```
+
+  输出：
+
+  ```
+  [[1 2]
+   [3 4]
+   [5 6]]
+  140533627151664
+  140533627151664 
+  
+  140533627151664
+  140533627127888
+  [[1 1 3]
+   [4 5 6]] 
+   [[1 1]
+   [3 4]
+   [5 6]] 
+  
+  140533627127888
+  140533627153104
+  ```
+
+- 线性代数
+
+  ```python
+  # numpy.dot()
+  # numpy.matmul() 和 dot 类似
+  # numpy.vdot()  向量的点积
+  # numpy.inner()
+  
+  a = np.array([[1, 2], [2, 2]])
+  b = np.array([[2, 4], [3, 5]])
+  print(np.dot(a, b))
+  print(np.matmul(a, b)) 
+  print(np.vdot(a, b)) # 计算时会把 a 和 b 展开成一维数组，再进行计算： 1*2 + 2*4 + 2*3 + 2*5 = 26 
+  print(np.inner(a, b)) # 当时一维数组时和向量的点集类似
+  # 当时高维度数组时
+  a = np.array([[1, 2], [3, 4]]) 
+  b = np.array([[11, 12], [13, 14]]) 
+  print (np.inner(a,b), '\n')
+  
+  # 求行列式
+  a = np.arange(9).reshape(3, 3)
+  d = np.linalg.det(a)
+  print(d, '\n')
+  
+  # 求矩阵方程的解
+  # 对于方程组
+  # x + y + z = 6
+  # 2y + 5z = -4
+  # 2x + 5y - z = 27
+  a = np.array([[1, 1, 1],
+                [0, 2, 5],
+                [2, 5, -1]
+               ]) 
+  b = np.array([[6],[-4],[27]]) 
+  # X = A^(-1)B
+  ainv = np.linalg.inv(a) 
+  print('a 的逆：', '\n', ainv)
+  x = np.linalg.solve(a, b) 
+  print(x)
+  ```
+
+  输出：
+
+  ```
+  [[ 8 14]
+   [10 18]]
+  [[ 8 14]
+   [10 18]]
+  26
+  [[10 13]
+   [12 16]]
+  [[35 41]
+   [81 95]] 
+  
+  0.0 
+  
+  a 的逆： 
+   [[ 1.28571429 -0.28571429 -0.14285714]
+   [-0.47619048  0.14285714  0.23809524]
+   [ 0.19047619  0.14285714 -0.0952381 ]]
+  [[ 5.]
+   [ 3.]
+   [-2.]]
+  ```
+
+- matplotlib
+
+  显示中文字体
+
+  - windows 下  
+    plt.rcParams['font.sans-serif']=['SimHei']
+
+  - ubuntu 下  
+
+    - 方法一：
+      下载 https://www.fontpalace.com/font-details/SimHei/ 字体, 
+      使用 fontproperties 属性  
+      myfont = FontProperties(fname='SimHei.ttf')
+      plt.ylabel('y轴', fontproperties=myfont)
+    - 方法二：（没有生效）
+      1. 下载字体
+         ubuntu下没有黑体这个字体，从网上下载 simhei.ttf 字体或从 windows 拷贝  
+      2. 修改matplotlib的配置文件  
+         找到文件位置：print(matplotlib.matplotlib_fname())  
+         修改文件：sudo gedit home/tony/.conda/envs/carnd/lib/python3.6/site-packages/matplotlib/mpl-data/matplotlibrc  
+         首先找到 font.family 和 font.sans-serif 两项，将 # 注释去掉，并且在 font.sans-serif 后添加 simhei.tff  
+         其次找到 axes.unicode_minus，去掉注释，将后面的 true 改为 false，是为了显示负号‘-’  
+      3. 复制下载的字体至matplotlib的字体路径  
+         sudo cp simhei.ttf /home/tony/.conda/envs/carnd/lib/python3.6/site-packages/matplotlib/mpl-data/fonts/ttf  
+      4. 删除缓存  
+         import matplotlib as mpl  
+         print(mpl.get_cachedir()) # 获取位置  
+         cd /home/tony/.cache/matplotlib  
+         rm -rf *
+
+    ```python
+    # matplotlib
+    from matplotlib import pyplot as plt
+    
+    myfont = FontProperties(fname='/home/tony/simhei.ttf')
+    x = np.arange(1, 10)
+    y = x**2 + 10
+    plt.subplot(1, 3, 1)
+    plt.title('y = x**2 + 10')
+    plt.xlabel('x轴', fontproperties=myfont)
+    plt.ylabel('y轴', fontproperties=myfont)
+    plt.plot(x, y, '_b')
+    plt.subplot(1, 3, 3)
+    plt.title('y = x**2 + 10')
+    plt.xlabel('x轴', fontproperties=myfont)
+    plt.ylabel('y轴', fontproperties=myfont)
+    plt.plot(x, y, '.b')
+    plt.show()
+    ```
+
+​        ![](imgs/14.png)
+
+- 直方图
+
+  ```python
+  #  使用 numpy 统计直方图
+  a = [2, 3, 4, 2, 4, 6, 7, 3, 9, 1, 4, 5]
+  b, bins = np.histogram(a, bins=[1, 2, 3, 4, 5, 6, 7, 8, 9])
+  print(b, bins)
+  
+  #  使用 matplotlib 画出直方图
+  plt.hist(a, bins=[1, 2, 3, 4, 5, 6, 7, 8, 9])
+  plt.show()
+  ```
+
+  输出：
+
+  ```
+  [1 2 2 3 1 1 1 1] [1 2 3 4 5 6 7 8 9]
+  ```
+
+  ![](imgs/15.png)

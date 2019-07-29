@@ -1,3 +1,59 @@
+- I/O
+
+  ```python
+  import numpy as np 
+  
+  # 保存为普通文本
+  a = np.arange(0,10,0.5).reshape(4, -1)
+  print(a)
+  np.savetxt("out.txt", a, fmt = "%d", delimiter = ",") # 改为保存为整数，以逗号分隔
+  
+  # 加载文本文件
+  b = np.loadtxt("out.txt", delimiter = ",") # load 时也要指定为逗号分隔
+  print(b)
+  
+  # 保存为二进制文件
+  np.save('outfile.npy', a) 
+  
+  # 加载二进制文件
+  c = np.load('outfile.npy') 
+  print(c)
+  
+  # 将多个数组保存为压缩文件
+  d = np.arange(10, 20, 0.5).reshape(4, -1)
+  np.savez('outfile.npz', a, d) 
+  
+  # 加载二进制文件
+  e = np.load('outfile.npz') 
+  print(e.files) # 输出有哪些数组
+  print(e['arr_0']) # 取其中一个数组
+  
+  # 使用 genfromtxt
+  world_alcohol = numpy.genfromtxt("world_alcohol.txt", delimiter=",", dtype="U75", skip_header=1)
+  ```
+
+  输出：
+
+  ```
+  [[ 0.   0.5  1.   1.5  2. ]
+   [ 2.5  3.   3.5  4.   4.5]
+   [ 5.   5.5  6.   6.5  7. ]
+   [ 7.5  8.   8.5  9.   9.5]]
+  [[0 0 1 1 2]
+   [2 3 3 4 4]
+   [5 5 6 6 7]
+   [7 8 8 9 9]]
+  [[ 0.   0.5  1.   1.5  2. ]
+   [ 2.5  3.   3.5  4.   4.5]
+   [ 5.   5.5  6.   6.5  7. ]
+   [ 7.5  8.   8.5  9.   9.5]]
+  ['arr_0', 'arr_1']
+  [[ 0.   0.5  1.   1.5  2. ]
+   [ 2.5  3.   3.5  4.   4.5]
+   [ 5.   5.5  6.   6.5  7. ]
+   [ 7.5  8.   8.5  9.   9.5]]
+  ```
+
 - np.random.choice()
 
   > 通过给定的一维数组数据产生随机采样
@@ -55,6 +111,8 @@
   
   print(a.itemsize)
   ```
+
+  输出：
 
   ```
   ['abc' 'xyz' 'zxl']
@@ -152,7 +210,7 @@
    [ 9 11]]
   ```
 
-- 布尔索引
+- 布尔索引（找到是 True 位置的元素，最终组成一维数组输出）
 
   ```python
   x = np.arange(0, 12).reshape([4, 3])

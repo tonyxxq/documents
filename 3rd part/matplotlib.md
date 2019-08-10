@@ -22,7 +22,16 @@
 - 简单的图像
 
   ```python
-  plt.plot([1, 2, 3, 4], [10, 20, 25, 30], color='lightblue', linewidth=3)
+  fruit = ["香蕉", '橘子', '苹果', '桃子']
+  x = [0, 1, 2, 3]
+  y = [10, 20, 25, 30]
+  
+  plt.figure(figsize=(5, 5))
+  plt.plot(x, y, color='lightblue', linewidth=3, label="销量")
+  plt.xlabel("x轴")
+  plt.ylabel("y轴")
+  plt.xticks(x, fruit, rotation=45)  # 替换成中文名称并进行 45 度旋转
+  plt.legend(loc="best")
   plt.show()
   ```
 
@@ -85,7 +94,31 @@
 
      
 
-- 绘线图
+  使用 Axes 对象实现如上的简单图像
+
+  ```python
+  fruit = ["香蕉", '橘子', '苹果', '桃子']
+  x = [0, 1, 2, 3]
+  y = [10, 20, 25, 30]
+  
+  fig, ax = plt.subplots(figsize=(5, 5))
+  
+  ax.plot(x, y, color='lightblue', linewidth=3, label="销量")
+  ax.set_xlabel("x轴")
+  ax.set_ylabel("y轴")
+  
+  ax.set_xticks(x)  # 替换成中文名称并进行 45 度旋转, y 轴类似，默认值为 both
+  ax.set_xticklabels(fruit)
+  ax.tick_params(axis='x', color='red', rotation=45)
+  
+  ax.legend(loc="best")
+  
+  plt.show()
+  ```
+
+  ![](imgs/28.png)
+
+- 线图
 
   ```python
   x = np.linspace(0, np.pi)

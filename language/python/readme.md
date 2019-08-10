@@ -852,10 +852,8 @@
 
 - @property
 
-  > 
-
   ```python
-  class Student(object):
+class Student(object):
       
       @property
       def score(self):
@@ -869,23 +867,35 @@
               raise ValueError('score must between 0 ~ 100!')
           self._score = value
   ```
-
   
+- 关于 zip 的理解
 
-- 
-
-  > 
-
+  > 取每个可迭代对象对应位置的元素组成新的元组
+>
+  > 所以新的元组的个数等于每个可迭代对象的元素个数
+  
   ```python
-  
+d = [('apples', 2), ('oranges', 3), ('peaches', 1)]
+  print(*d)
+fruit, value = zip(*d)
+  print(fruit)
+print(value
   ```
 
-  
+  输出为：
 
+  ```
+  ('apples', 2) ('oranges', 3) ('peaches', 1)
+  ('apples', 'oranges', 'peaches')
+  (2, 3, 1)
+  ```
   
-
   
-
   
-
+  
+  
+  
+  
+  
+  
   

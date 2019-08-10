@@ -7,3 +7,5 @@
 <a href="matplotlib.md">matplotlib</a>
 
 <a href="pandas.md">pandas</a>
+
+<a href="redis.md">redis</a>

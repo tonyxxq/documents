@@ -42,7 +42,7 @@
 
 3. 安装依赖  pcre-devel  openssl-devel
 
-4. 解压  tar -zxvf  nginx.tar
+4. 解压  tar -zxvf release-1.17.3.tar.gz
 
 5. 进入 nginx 目录
 

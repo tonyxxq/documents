@@ -22,7 +22,7 @@
 
 
 
-使用多个独立的工程实现的系统架构，称为 SOA 系统架构（Service Oriented Architecture,  即面向对象的系统架构），各个工程之间的通信使用 PRC（远程过程调用）
+使用多个独立的工程实现的系统架构，称为 SOA 系统架构（Service Oriented Architecture,  即面向服务的系统架构），各个工程之间的通信使用 PRC（远程过程调用）
 
 其实 RPC 底层就是通过 Socket 实现的，只要知道主机名和端口号，就可以通过网络连接上，而无需知道底层怎样实现的通信。
 
@@ -52,7 +52,7 @@ Invocation 会话域
 
 Busniess 服务层
 
-PRC    
+PRC
 
 Remoting 层
 

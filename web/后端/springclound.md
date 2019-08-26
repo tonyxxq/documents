@@ -621,17 +621,362 @@ github地址： https://github.com/Netflix/eureka
        }
        ```
 
+
+#### Hystrix 熔断机制与服务降级
+
+先了解雪崩效应和服务雪崩
+
+- 雪崩效应：服务 A 依赖 服务 B 和 C，同时服务 B 和 C 又依赖别的服务....
+
+![](imgs/46.png)
+
+
+
+![](imgs/47.png)
+
+​					最终导致所有生产陷入瘫痪，这就是雪崩效应
+
+- 雪崩效应发生在 SOA 服务系统中，称为服务雪崩
+
+  ![](imgs/48.png)
+
+- 熔断机制
+
+  ![](imgs/49.png)
+
+- Hystrix 
+
+  ![](imgs/50.png)
+
+  ​						可处理的备选响应，就避免了服务雪崩。
+
+- 服务降级
+
+  提供者端的服务熔断，消费者端的本地服务，共同构成服务降级（降级指的是，本应该由提供者提供，但由消费者提供默认数据了）
+
+  ![](imgs/51.png)
+
+- Hystrix服务降级代码（ 方法级别）
+
+  > Hystrix 和提供者没有关系只在消费者端添加
+  >
+  > Hystrix 和 Feign 是没有任何关系的
+
+  1. 添加 hystrix 依赖
+
+     ```xml
+     <dependency>
+         <groupId>org.springframework.cloud</groupId>
+         <artifactId>spring-cloud-starter-netflix-hystrix</artifactId>
+     </dependency>
+     ```
+
+  2. 修改处理器，在处理器**方法**上添加 @HystrixCommond 注解 ，并添加处理方法
+
+     ```java
+     // 服务降级，若当前处理器方法发生异常，则执行 fallbackMethod 属性方法
+     @GetMapping("/get/{id}")
+     @HystrixCommand(fallbackMethod = "getDepartHandle")
+     public Depart getDepart(@PathVariable("id") int id) {
+         String url = url_prefix + "/get/" + id;
+         Depart depart = restTemplate.getForObject(url, Depart.class);
+         if (depart == null) {
+             throw new RuntimeException();
+         }
+         return depart;
+     }
+     
+     public Depart getDepartHandle(@PathVariable("id") int id) {
+         Depart depart = new Depart();
+         depart.setId(id);
+         depart.setName("no this depart");
+         depart.setName("no this depart");
+         depart.setDbase("no this db");
+         return depart;
+     }
+     ```
+
+  3. 在启动类上添加 `@EnableCircuitBreaker` 注解， 开启服务降级
+
+- Hystrix  + Feign 服务降级（类级别）
+
+  > 注意：方法级别高于类级别的服务降级处理
+
+  1. 添加 hystrix 依赖
+
+     ```xml
+     <dependency>
+         <groupId>org.springframework.cloud</groupId>
+         <artifactId>spring-cloud-starter-netflix-hystrix</artifactId>
+     </dependency>
+     ```
+
+  2. 在 Feign 接口所在包下定义降级处理类
+
+     ```java
+     @Component
+     public class DepartFallbackFactory implements FallbackFactory<DepartService> {
+     
+         @Override
+         public DepartService create(Throwable throwable) {
+             // 返回 Feign 接口的匿名内部类
+             return new DepartService() {
+                 @Override
+                 public boolean saveDepart(Depart depart) {
+                     System.out.println("执行服务降级 saveDepart 方法");
+                     return false;
+                 }
+     
+                 @Override
+                 public boolean removeDepartById(int id) {
+                     System.out.println("执行服务降级 removeDepartById 方法");
+                     return false;
+                 }
+     
+                 @Override
+                 public boolean modifyDepart(Depart depart) {
+                     System.out.println("执行服务降级 modifyDepart 方法");
+                     return false;
+                 }
+     
+                 @Override
+                 public Depart getDepartById(Integer id) {
+                     System.out.println("执行服务降级 getDepartById 方法");
+                     Depart depart = new Depart();
+                     depart.setId(id);
+                     depart.setName("no this depart");
+                     depart.setDbase("no this db");
+                     return depart;
+                 }
+     
+                 @Override
+                 public List<Depart> listAllDeparts() {
+                     System.out.println("执行服务降级 listAllDeparts 方法");
+                     return null;
+                 }
+             };
+         }
+     }
+     ```
+
+  3. 在 Feign 接口中指定要使用的降级处理类
+
+     ```java
+     @Service // 只是为了让 idea 不报错
+     @FeignClient(value = "kkbmsc-provider-depart", fallbackFactory=DepartFallbackFactory.class) // 指定微服务的名称和降级处理类
+     @RequestMapping("/provider/depart")
+     public interface DepartService {
+         @PostMapping("/save")
+         boolean saveDepart(Depart depart);
+     
+         @DeleteMapping("/del/{id}")
+         boolean removeDepartById(@PathVariable("id") int id);
+     
+         @PutMapping("/update")
+         boolean modifyDepart(Depart depart);
+     
+         @GetMapping("/get/{id}")
+         Depart getDepartById(@PathVariable("id") Integer id);
+     
+         @GetMapping("/list")
+         List<Depart> listAllDeparts();
+     }
+     ```
+
+  4. 在配置文件中开启 Feign 对 Hystrix 的支持
+
+     ```yml
+     # 开启 Feign 对 hystrix 的支持
+     feign:
+       hystrix:
+         enabled: true
+     
+     # 设置服务熔断时间，默认为 5000 毫秒
+     hytrix:
+       command:
+         default:
+           execution:
+             isolation:
+               thread:
+                 timeoutInMilliseconds: 5000
+     ```
+
+  5. 在启动类上添加 `@EnableCircuitBreaker` 注解， 开启服务降级
+
+- 网关服务 Zuul
+
+  Zuul 里边有负载均衡
+
+  ![](imgs/52.png)
+
+  ​	![](imgs/53.png)
+
+  1. 添加 eureka 和 zuul 依赖
+
+     ```xml
+     <dependency>
+     	<groupId>org.springframework.cloud</groupId>
+     	<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+     </dependency>
+     
+     <dependency>
+     	<groupId>org.springframework.cloud</groupId>
+     	<artifactId>spring-cloud-starter-netflix-zuul</artifactId>
+     </dependency>
+     
+     <dependency>
+     	<groupId>org.springframework.boot</groupId>
+     	<artifactId>spring-boot-starter-actuator</artifactId>
+     </dependency>
+     ```
+
+  2. 修改主配置文件
+
+     > 注册为 eureka 服务客户端，并指定微服务名称
+
+     ```yml
+     server:
+       port: 9000
+     
+     eureka:
+       client:
+         service-url:
+           defaultZone: http://localhost:8000/eureka
+     
+     spring:
+       application:
+         name: kkbmsc-zuul-depart
+     ```
+
+  3. 在主类上添加 `@EnableZuulProxy` 注解
+
+     ```java
+     @SpringBootApplication
+     @EnableZuulProxy // 开启 Zuul 代理模式
+     public class ZuulApplication {
+     
+         public static void main(String[] args) {
+             SpringApplication.run(ZuulApplication.class, args);
+         }
+     }
+     ```
+
+  4. 启动 eureka 服务端，消费端，服务端 和 zuul，查看到已经启动的微服务
+
+     ![](imgs/54.png)
+
+  5. 浏览器访问消费端
+
+     原始方式：
+
+     <http://localhost:8080/consumer/depart/get/1>
+
+     zuul 方式（zuul 地址 + consumer 微服务名称 + 数据访问地址）：
+
+     <http://localhost:9000/kkbmsc-consumer-depart/consumer/depart/get/1>
+
+     但是这样暴露了微服务名称，对系统来说不安全
+
+     解决办法：对微服务进行映射
+
+     在主配置文件中添加：
+
+     ```yml
+     # 设置 zuul 路由规则
+     zuul:
+       # 设定微服务名称的替换规则
+       routes:
+         # 指定替换的微服务名称，someDepart 可以任意指定，后面的不能任意指定
+         someDepart.serviceId: kkbmsc-consumer-depart
+         # 指定替换的路径
+         someDepart.path: /condep/**
        
+       # 忽略指定的微服务，这样就只能使用替换后的路径，不能使用之前的微服务名称访问了
+       # 忽略所有使用 “*” 代替
+       ignored-services:  kkbmsc-consumer-depart
+       # ignored-services:  "*"
+       
+       # 为映射路径统一添加前缀
+       prefix: /depart
+     ```
+
+     启动再次访问：
+
+     <http://localhost:9000/depart/condep/consumer/depart/get/1>
+
+####  Spring Cloud Config 分布式配置中心
+
+1. 简介
+
+   ![](imgs/55.png)
+
+附：github ssh 免密登录过程（非对称加密）
+
+> 公钥加密，私钥解密；github 加密，本地解密
+
+![](imgs/57.png)
+
+![](imgs/56.png)
+
+2. 创建远程仓库，并克隆到本地
 
    
 
+   创建配置工程
 
+   - 切换到不同环境
 
+   - 切换到指定环境
 
+   - 切换到指定分支的环境
 
+   - 读取指定分支上 master 的配置信息
 
+     localhost:9999/application/dev/master
 
+     
 
+     
+
+   创建 eureka 服务工程
+
+   ![](imgs/58.png)
+
+   添加依赖
+
+   
+
+   配置文件
+
+   ```yml
+   spring:
+     cloud:
+       config:
+         # 指定 configServer 地址
+         uri: http://localhost:9999
+         # 指定远程仓库的分支
+         label: master
+         # 指定要从远程库中读取的文件名，无需扩展名，只能是 yml 结尾
+         name: application-eureka-config
+         # 指定选择的环境
+         profile: dev
+   ```
+
+   多环境设置 ---
+
+   
+
+   访问默认是 dev
+
+   
+
+   
+
+   
+
+   
+
+   
 
 
 

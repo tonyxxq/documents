@@ -21,6 +21,8 @@
 
 ### 三、FastDFS 架构原理分析
 
+> 原理中还有 文件同步、新增 torage server 流程还没有理解
+
 - 架构
 
   > 注意：同组内的服务器存储容量最好一致，不同组内的服务器的存储容量可以不一致（因为一个组内的最大容量是由最小的服务器的存储容量决定的）
@@ -31,7 +33,7 @@
 
 - storage 状态收集
 
-  Storage Server 会通过配置连接集群中的所有的 Tracker Server，并定时向他们发送自己的状态（心跳），包括磁盘剩余空间，文件同步状态，文件上传下载次数统计信息
+  Storage Server 会通过配置连接集群中的所有的 Tracker Server，并定时向他们发送自己的状态（心跳），包括磁盘剩余空间，文件同步状态，文件上传下载次数统计等信息
 
   storage server 有 7 个状态：
 
@@ -58,32 +60,18 @@
   >  注意：文件只在组内进行同步，源数据才进行同步，备份数据不进行同步，但是新增加的服务器需要同步备份数据和源数据
 
   ![](imgs/65.png)
+  
+  注意：设置每个服务器的时间，需要一致，最多相差不到一分钟
 
-![](imgs/64.png)
+- 文件下载流程
 
-6. 文件下载流程
+  ![](imgs/128.png)
 
-   ![](imgs/66.png)
+  注意：文件的 file_id 中已经包括了文件的源服务器 IP、文件创建时间等信息 
 
-   ![](imgs/67.png)
+- 新增 Storage Server
 
-![](imgs/68.png)
-
-- 新增 Storage Server 
-
-  组内新增加一台 storage_server A 时，由系统完成已有数据同步，处理逻辑如下：
-
-  1. storage server A 连接 tracker_server，tracker_server 将 storage_server 的状态设置为 FDFS_STORAGE_STATUS_INIT。storage server A 询问追加同步的源服务器和追加同步截止时间点。
-
-     如果该组内只有 storage server A 或该组内上传的文件数为0，则没有数据要同步，此时 tracker 将其状态设置为 FDFS_STORAGE_STATUS_ONLINE，否则 tracker_server
-
-![](imgs/70.png)
-
-![](imgs/71.png)
-
-注意：设置每个服务器的时间，需要一致，最多相差不到一分钟
-
-
+  ![](imgs/71.png)
 
 ### 四、FastDFS 安装
 
@@ -124,14 +112,14 @@
    修改 /etc/fdfs 目录下的 tracker-server 文件
   
   ```bash
-  # 修改 base_pathm,指定数据和日志的存放目录
+  # 修改 base_path, 指定数据和日志的存放目录
   base_path=/kkb/server/fashdfs/tracker
   
   # 创建目录
   mkdir -p /kkb/server/fashdfs/tracker
   ```
   
-- 修改 storage  server 配置
+- storage  server 配置
 
    修改 /etc/fdfs 目录下的 storage  -server 文件
 
@@ -151,19 +139,27 @@
   # tracker_server = 111.231.106.222:22122
   ```
 
-- 启动
+- 启动、关闭、重启
 
   ```bash
   # 关闭防火墙
   systemctl stop firewalld
   # 或 systemctl disable firewalld 表示永久失效
   
-  # 不同机器上根据角色分别启动tracker-server 和 storage-server
-  fdfs_trackerd /etc/fdfs/tracker.conf
-  fdfs_storaged /etc/fdfs/storage.conf
+  # 不同机器上根据角色分别启动 tracker-server 和 storage-server
+  /usr/bin/fdfs_trackerd /etc/fdfs/tracker.conf
+  /usr/bin/fdfs_storaged /etc/fdfs/storage.conf
+  
+  # 重启
+  /usr/bin/restart.sh /usr/bin/fdfs_trackerd /etc/fdfs/tracker.conf
+  /usr/bin/restart.sh /usr/bin/fdfs_storaged /etc/fdfs/storage.conf
+  
+  # 关闭
+  /usr/bin/stop.sh /usr/bin/fdfs_trackerd /etc/fdfs/tracker.conf
+  /usr/bin/stop.sh /usr/bin/fdfs_storaged /etc/fdfs/storage.conf
   ```
 
-- 开机启动
+- 设置开机启动（有问题）
 
   ```bash
   # tracker 开机启动
@@ -179,11 +175,11 @@
 
 - 上传图片测试
 
-  FastDFS 安装成功后可以通过 【fdfs_test】命令测试上传，下载等操作
+  FastDFS 安装成功后可以通过 【fdfs_test】命令测试上传，下载等操作（可以在任何一台安装了 fastdfs 的机器上执行）
 
   - 进入 /etc/fdfs 目录，拷贝一份 client.conf 文件
 
-    ```
+    ```bash
     cd /etc/fdfs
     cp client.conf.sample client.conf
     ```
@@ -200,36 +196,69 @@
     # 创建 client 数据目录
     mkdir -p /kkb/server/fastdfs/client
     
-    # 使用命令测试
-    fdfs_test /etc/fdfs/client.conf upload /home/1.txt
+    # 使用命令测试上传
+    fdfs_test /etc/fdfs/client.conf upload 1.png
     ```
 
-### 五、FastDFS-Nginx 扩展模块源码
+### 五、FastDFS-Nginx 扩展模块
 
-不使用 Nginx 扩展模块，只安装 web 服务器（Nginx 或 Apache）也可以对文件进行访问
+- 原因
 
-为什么要使用 Nginx 扩展模块？
+  不使用 Nginx 扩展模块，只安装 web 服务器（Nginx 或 Apache）也可以对文件进行访问
 
-1. 合并之后的文件，不通过 nginx 扩展模块是访问不到的
-2. 文件如果文件未同步成功，使用 nginx 扩展模块可以转发或重定向到源服务器
+  为什么要使用 Nginx 扩展模块？
 
-![](imgs/73.png)
+  1. 合并之后的文件，不通过 nginx 扩展模块是访问不到的
+  2. 文件如果文件未同步成功，使用 nginx 扩展模块可以转发或重定向到源服务器
 
-配置文件加载流程（配置文件默认从 storage 加载）
+- 安装
 
-![](imgs/75.png)
+  > 安装在每一台 storage 服务器上
 
-
-
-- 加载配置文件
-
-  目标文件：/etc/fdfs/mod_fastdfs.conf
-
-- 读取扩展模块配置
-
-  一些重要参数：
-
+  ```bash
+  # 下载扩展模块
+  wget https://github.com/happyfish100/fastdfs-nginx-module/archive/V1.20.tar.gz
+  
+  # 解压
+  tar -zxvf V1.20.tar.gz
+  
+  # 修改 config(特别关键) 配置文件
+  cd fastdfs-nginx-module-1.20/src
+  vim config
   ```
+
+  需要修改第 6 行和第 15 行（修改内容一样）
+
+  ```shell
+  1 ngx_addon_name=ngx_http_fastdfs_module
+  2 
+  3 if test -n "${ngx_module_link}"; then
+  4     ngx_module_type=HTTP
+  5     ngx_module_name=$ngx_addon_name
+  6     ngx_module_incs="/usr/local/fastdfs /usr/include/fastcommon/"
+  7     ngx_module_libs="-lfastcommon -lfdfsclient"
+  8     ngx_module_srcs="$ngx_addon_dir/ngx_http_fastdfs_module.c"
+  9     ngx_module_deps=
+  10     CFLAGS="$CFLAGS -D_FILE_OFFSET_BITS=64 -DFDFS_OUTPUT_CHUNK_SIZE='256*1024' -DFDFS_MOD_CONF_FILENAME='\"/etc/fdfs/mod_fastdfs.conf\"'"
+  11     . auto/module
+  12 else
+  13     HTTP_MODULES="$HTTP_MODULES ngx_http_fastdfs_module"
+  14     NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_addon_dir/ngx_http_fastdfs_module.c"
+  15     CORE_INCS="$CORE_INCS /usr/local/fastdfs /usr/include/fastcommon/"
+  16     CORE_LIBS="$CORE_LIBS -lfastcommon -lfdfsclient"
+  17     CFLAGS="$CFLAGS -D_FILE_OFFSET_BITS=64 -DFDFS_OUTPUT_CHUNK_SIZE='256*1024' -DFDFS_MOD_CONF_FILENAME='\"/etc/fdfs/mod_fastdfs.conf\"'"
+  18 fi
+  ```
+
+  拷贝文件
+
+  ```bash
+  cp mod_fastdfs.conf  /etc/fdfs
+  ```
+
+  关于配置文件中的一些参数说明
+
+  ```shell
   group_count          // group 个数
   url_have_group_name  // url 中是否包含 group
   group.store_path     // group 对应的存储路径
@@ -239,372 +268,433 @@
   load_fdfs_parameters_from_tracker // 是否从 tracker 下载服务端配置
   ```
 
+  修改配置文件
+
+  ```bash
+  vim /etc/fdfs/mod_fastdfs.conf
+  ```
+
+  修改如下内容
+
+  ```shell
+  base_path=/kkb/server/fashdfs/storage
+  tracker_server=192.168.1.101:22122
+  url_have_group_name=true
+  store_path0=/kkb/server/fashdfs/storage
+  ```
+
+  安装 nginx 和 fastdfs-nginx-module
+
+  ```bash
+  # 安装依赖
+  yum install -y  gcc-c++ pcre-devel  openssl-devel
   
+  # 下载 nginx 并解压
+  wget http://nginx.org/download/nginx-1.1.10.tar.gz
+  tar -zxvf nginx-1.1.10.tar.gz
+  
+  # 进入 nginx 目录
+  cd nginx-1.1.10
+  
+  # 执行安装， 安装到 /kkb/server目录下且添加两个模块
+  ./configure  \
+  	--prefix=/kkb/server/nginx \
+  	--with-http_gzip_static_module \
+  	--add-module=/opt/software/fastdfs-nginx-module-1.20/src
+  
+  make && make install
+  
+  # 进入 /kkb/server/nginx/sbin,查看模块是否安装成功
+  cd /kkb/server/nginx/sbin
+  ./nginx -V
+  ```
 
-  文件下载过程
+  修改 nginx.conf，重启 nginx
 
-  ![](imgs/76.png)
+  ```perl
+  location /group1/M00/ {
+       ngx_fastdfs_module;
+  }
+  ```
 
-![](imgs/79.png)
+  浏览器访问（这张图片是在前面测试的时候上传的）：
+
+  <http://192.168.1.103/group1/M00/00/00/wKgBZ11ks-iADQTpAAgzAENGwrE287.png>
+
+  ![](imgs/129.png)
+
+### 六、合并存储(重要)
+
+- 为什么要合并存储：
+
+  因为对于海量的小文件处理上，文件系统的处理性能会受到显著的影响
+
+- FastDFS 合并存储文件大小
+
+  FastDFS 提供的合并存储功能，默认创建的大文件为默认 64 MB，然后在该大文件中存储很多小文件。大文件中容纳一个小文件的空间称为一个 Slot，规定Slot最小值为默认 256 字节，最大为默认 16MB，也就是小于 256 字节的文件也需要占用256字节，**超过16MB的文件不会合并存储而是创建独立的文件**
+
+- 合并存储文件的 file_id 
+
+  file_id 和普通的文件file_id 不一样，除了普通文件包括的信息外，还包括了文件所属的 `trunk_id`和 内容在文件的`偏移量 offset`，所以会比普通的文件的文件名长一些
+
+- 配置 tracker.conf（tracker 服务器），开启合并存储
+
+  >  tracker.conf 中的常用配置说明
+  >
+  > ![](imgs/107.png)
+
+  修改  tracker.conf 配置
+
+  ```shell
+  usr_trunk_file=true
+  store_server=1
+  ```
+
+- 空间平衡树
+
+  > storage server 会为每个 store_path 建立一个空间平衡树，相同大小的空闲块会放到一个链表中
+  >
+  > 每次存储文件时都是在平衡树中找空间最相近的空闲块，若没找到又会创建一个 64M 的 trunk 文件；
+  >
+  > 若找到，分成两个空闲块，一个空闲块存文件，另一个空闲块重新挂载到平衡树中
+  >
+  > 另外，删除文件的时候也会产生空闲块
+
+  ![](imgs/110.png)
+
+  ![](imgs/113.png)
+
+- TrunkServer
+
+  > TrunkServer 是 一个 group 中 的 一个 storage，用于为该组内的所有 upload 操作分配空间
+
+### 七、存放缩略图
+
+- 主从文件
+
+  > 先上传主文件，得到主文件的 field_id
+  >
+  > 然后上传从文件（缩略图），使用主文件 field_id作为关联
+  >
+  > fastdfs 提供了关联主从文件的 API
+  >
+  > **注意：从文件必须先创建好了上传**
+
+  ```java
+   public static void main(String[] args) throws Exception {
+          // 主文件
+          String[] result = FileUploadUtils.uploadFile("D:\\master.png", "1.png");
+          System.out.println("组名：" + result[0]);
+          System.out.println("文件名： " + result[1] + "\n");
+  		
+          // 从文件
+          String[] result2 = FileUploadUtils.uploadSlaveFile(result[1], "D:\\slave.png", "_100_100", ".png");
+          System.out.println("组名：" + result2[0]);
+          System.out.println("文件名： " + result2[1] + "\n");
+      }
+  ```
+
+  输出：
+
+  ```
+  组名：group1
+  文件名： M00/00/00/wKgBZl1k9WiIYID3AAC3s_46goYAAAAAQAETsIAALfL418.png
+  
+  组名：group1
+  文件名： M00/00/00/wKgBZl1k9WiIYID3AAC3s_46goYAAAAAQAETsIAALfL418_100_100.png
+  ```
+
+- Nginx 生成缩略图 
+
+  > 使用 image_filter 模块，可以对图片进行压缩、裁剪、旋转等操作
+
+  安装
+
+  ```bash
+  # 安装依赖
+  yum install -y gd-devel
+  
+  # 配置且安装 nginx
+  ./configure  \
+  --prefix=/kkb/server/nginx  \
+  --with-http_gzip_static_module \
+  --add-module=/opt/software/fastdfs-nginx-module-1.20/src \
+  --with-http_image_filter_module
+  
+  make && make install
+  ```
+
+  配置 nginx.conf
+
+  ```perl
+  location ~ /group1/(.*)_(\d+)x(\d+)\.(jpg|png|gif) {
+  	ngx_fastdfs_module;
+  
+  	set $n $1;
+  	set $w $2;
+  	set $h $3;
+  	set $t $4;
+  	
+  	# 设置等比例缩放后文件的大小
+  	image_filter resize $w $h;
+  	
+  	# 如果源图片超过 10M， 将抛出 415 错误
+  	image_filter_buffer 10M;
+  	
+  	# 裁剪图片（效果跟 resize 差不多， 不是期待的裁剪）
+  	# mage_filter crop $w $h;
+  	
+  	# 图片进行旋转
+  	# image_filter rotate 90/180/270;
+  
+  	rewrite ^/group1/(.*)$ /group1/$n.$t  break;
+  }
+  ```
+
+  重新加载 nginx
+
+  ```
+  nginx -s reload
+  ```
+
+  浏览器访问（包括合并存储的文件）
+
+  <http://192.168.1.103/group1/M00/00/00/wKgBZl1lZJaIDvPMAACBAwMcsjEAAAAAQAHLe4AAIEb784_600x600.png>
+
+### 八、Java 客户端
+
+- 安装 fastdfs-client-java 到本地仓库
+
+  ```bash
+  git clone https://github.com/happyfish100/fastdfs-client-java
+  cd fastdfs-client-java
+  mvn clean install
+  ```
+
+- 项目中引入依赖
+
+  ```xml
+  <dependency>
+  	<groupId>org.csource</groupId>
+  	<artifactId>fastdfs-client-java</artifactId>
+  	<version>1.27-SNAPSHOT</version>
+  </dependency>
+  ```
+
+- 添加配置文件
+
+  ```properties
+  fastdfs.connect_timeout_in_seconds = 5
+  fastdfs.network_timeout_in_seconds = 30
+  fastdfs.charset = UTF-8
+  fastdfs.http_anti_steal_token = false
+  fastdfs.http_secret_key = FastDFS1234567890
+  fastdfs.http_tracker_http_port = 80
+  
+  # tracker server 的 ip 和端口，多个使用逗号分割
+  # 这个配置是必须的，其他不是必须的
+  fastdfs.tracker_servers = 192.168.1.101:22122
+  ```
+
+- 增/删/查 工具类
+
+  ```java
+  public class FileUploadUtils {
+      private static TrackerClient trackerClient = null;
+      private static TrackerServer trackerServer = null;
+      private static StorageServer storageServer = null;
+      private static StorageClient storageClient = null;
+      private static final String groupName = "group1";
+  
+      static {
+          // 加载配置文件
+          try {
+              ClientGlobal.initByProperties("fastdfs-client.properties");
+              // System.out.println("ClientGlobal.configInfo():" +
+              // ClientGlobal.configInfo());
+          } catch (IOException | MyException e) {
+              e.printStackTrace();
+              System.out.println("load config file fail");
+          }
+      }
+  
+      /*
+       * 初始化连接数据
+       */
+      private static void init() {
+          try {
+              trackerClient = new TrackerClient();
+              trackerServer = trackerClient.getConnection();
+              storageClient = new StorageClient(trackerServer, storageServer);
+          } catch (IOException e) {
+              e.printStackTrace();
+              System.out.println("init fail");
+          }
+      }
+  
+      /**
+       * 上传文件
+       * @param filePath 文件路径
+       * @param fileName 文件名称
+       * @return 文件存储信息
+       */
+      public static String[] uploadFile(String filePath, String fileName) {
+          return uploadFile(null, filePath, fileName);
+      }
+  
+      /**
+       * 上传文件
+       * @param fileBuff 文件字节数组
+       * @param fileName 文件名称
+       * @return 文件存储信息
+       */
+      public static String[] uploadFile(byte[] fileBuff, String fileName) {
+          return uploadFile(fileBuff, null, fileName);
+      }
+  
+      /**
+       * 上传文件
+       * @param fileBuff 文件字节数组
+       * @param filePath 文件路径
+       * @param fileName 文件名称
+       * @return 文件存储信息
+       */
+      private static String[] uploadFile(byte[] fileBuff, String filePath, String fileName) {
+          try {
+              if (fileBuff == null && filePath == null) {
+                  return new String[0];
+              }
+  
+              // 初始化数据
+              if (storageClient == null) {
+                  init();
+              }
+  
+              // 获取文件扩展名称
+              String fileExtName;
+              if (fileName != null && !"".equals(fileName) && fileName.contains(".")) {
+                  fileExtName = fileName.substring(fileName.lastIndexOf(".") + 1);
+              } else {
+                  return new String[0];
+              }
+  
+              // 上传文件
+              String[] uploadFile = null;
+              if (fileBuff != null && filePath == null) {
+                  if (fileBuff.length == 0) {
+                      return new String[0];
+                  }
+                  uploadFile = storageClient.upload_file(fileBuff, fileExtName, null);
+              } else {
+                  uploadFile = storageClient.upload_file(filePath, fileExtName, null);
+              }
+              return uploadFile == null ? new String[0] : uploadFile;
+          } catch (Exception e) {
+              e.printStackTrace();
+          } finally {
+              try {
+                  if (trackerServer != null) {
+                      trackerServer.close();
+                      trackerServer = null;
+                  }
+                  if (storageServer != null) {
+                      storageServer.close();
+                      storageServer = null;
+                  }
+              } catch (IOException e) {
+                  e.printStackTrace();
+              }
+          }
+          return new String[0];
+      }
+      
+      // 保存为从文件
+      public static String[] uploadSlaveFile(String fileId, String filePath, String prefix, String fileExtName) throws Exception {
+          String[] uploadFile = storageClient.upload_file(groupName, fileId, prefix, filePath, fileExtName, null);
+          return uploadFile == null ? new String[0] : uploadFile;
+  }
+  
+      /**
+       * 删除服务器文件
+       * @param remoteFileName  文件在服务器中名称
+       */
+      public static int deleteFile(String groupName, String remoteFileName) {
+          try {
+              if (storageClient == null) {
+                  init();
+              }
+              int code = storageClient.delete_file(groupName, remoteFileName);
+              return code;
+          } catch (Exception e) {
+              e.printStackTrace();
+              System.out.println("The File Delete Fail");
+          }
+          return -1;
+      }
+  
+      /**
+       * 获取文件信息，直接解析的文件名
+       * @param groupName  组名
+       * @param remoteFilename  远程文件名
+       */
+      public static FileInfo getFileInfo(String groupName, String remoteFilename) {
+          try {
+              if (storageClient == null) {
+                  init();
+              }
+              FileInfo fileInfo = storageClient.get_file_info(groupName, remoteFilename);
+              return fileInfo;
+          } catch (Exception e) {
+              e.printStackTrace();
+              System.out.println("Get File Info Fail");
+          }
+          return null;
+      }
+  }    
+  ```
+
+- 测试类
+
+  ```java
+  public static void main(String[] args) {
+      // 创建文件
+      String[] result = FileUploadUtils.uploadFile("D:\\1.png", "1.png");
+      System.out.println("组名：" + result[0]);
+      System.out.println("文件名： " + result[1] + "\n");
+  
+      // 获取文件信息（解析文件名）
+      FileInfo info = FileUploadUtils.getFileInfo("group1", "M00/00/00/wKgBZl1k476Ab17UAAC3s_46goY435.png");
+      System.out.println("文件大小：" + info.getFileSize());
+      System.out.println("文件原服务器 IP：" + info.getSourceIpAddr());
+      System.out.println("文件创建时间时间戳：" + info.getCreateTimestamp() + "\n");
+  
+      // 删除文件
+      int status = FileUploadUtils.deleteFile("group1", "M00/00/00/wKgBZ11k5e2AYki8AAC3s_46goY488.png");
+      System.out.println(status);
+  }
+  ```
+
+- 输出
+
+  ```
+  组名：group1
+  文件名： M00/00/00/wKgBZl1k5zeAAVpCAAC3s_46goY062.png
+  
+  文件大小：47027
+  文件原服务器 IP：192.168.1.102
+  文件创建时间时间戳：Tue Aug 27 16:03:10 CST 2019
+  
+  2
+  ```
+
+### 九、 查看错误日志
+
+- tracker 日志在 tracker 设定的的 base_path 目录下
+- storage 日志在 storage 设定的 base_path 目录下
+- nginx 在安装时指定的 error-log-path，默认装在 logs 目录下
 
-![](imgs/80.png)
 
-![](imgs/78.png)
 
-![](imgs/81.png)
 
-![](imgs/82.png)
 
-###### 若本地存在，输出本地文件
 
-配置 FastDFS-Nginx 的 Nginx 模块（storage server）
-
-```
-wget https://github.com/happyfish100/fastdfs-nginx-module/archive/V1.20.tar.gz
-
-# 解压
-
-# 修改 config(特别关键)
-cd fastdfs-nginx-module/src
-vim config
-
-
-```
-
-![](imgs/83.png)
-
-拷贝文件
-
-cp mod....conf  /tec/fdfs
-
-编辑 
-
- ![](imgs/84.png)
-
-![](imgs/85.png)
-
-
-
-![](imgs/86.png)
-
-安装....
-
-查看是否安装成功
-
-nginx -V 
-
-修改 nginx.conf
-
- ![](imgs/87.png)
-
-重新加载
-
-
-
-### 七、安装 Nginx
-
-Nginx 需要安装在每一台 Storage Server 
-
-下载
-
-<https://github.com/nginx/nginx/releases>
-
-### 八、合并存储(重要)
-
-![](imgs/105.png)
-
-![](imgs/106.png) 
-
-​	![](imgs/107.png)
-
-
-
-使用 M 的方式显示文件
-
-ll   --block-size=m
-
-![](imgs/108.png)
-
-![](imgs/109.png)
-
-![](imgs/110.png)
-
-![](imgs/113.png)
-
-
-
-![](imgs/111.png)
-
-TrunkServer 的选举
-
-![](imgs/112.png)
-
-选择 IP 最小的
-
-### 九、存放缩略图
-
-![](imgs/92.png)
-
-![](imgs/91.png)
-
- 2. 然后上传从文件（即：缩略图），指定主文件 ID
-
-    前提：本地先要生成对应的缩略图，然后再使用FastDfs 主从文件完成上传
-
-![](imgs/93.png)
-
-安装
-
-安装依赖
-
-```
-yum install -y gd-devel
-```
-
-![](imgs/94.png)
-
-make 就可以了
-
-![](imgs/95.png)
-
-
-
-$就是 （） 指定的位置
-
-访问 FastDfs 图片
-
-![](imgs/99.png)
-
-
-
-![](imgs/98.png)
-
-![](imgs/100.png)
-
-​	访问普通图片
-
-![](imgs/101.png)
-
-![](imgs/102.png)
-
-​	![](imgs/103.png)
-
-访问FastDFS
-
-![](imgs/104.png)
-
-### 十、Java 客户端
-
-![](imgs/88.png)
-
-![](imgs/89.png)
-
-![](imgs/90.png)
-
-代码：
-
-```java
-/**
- * 上传文件工具类
- * @ClassName: FileUploadUtils
- * @author wrh45
- * @date 2017年8月8日下午4:14:31
- */
-public class FileUploadUtils {
-    private static TrackerClient trackerClient = null;
-    private static TrackerServer trackerServer = null;
-    private static StorageServer storageServer = null;
-    private static StorageClient storageClient = null;
-    private static final String groupName = "group1";
-
-    static {
-        // 加载配置文件
-        try {
-            ClientGlobal.initByProperties("config/fastdfs-client.properties");
-            // System.out.println("ClientGlobal.configInfo():" +
-            // ClientGlobal.configInfo());
-        } catch (IOException | MyException e) {
-            e.printStackTrace();
-            System.out.println("load config file fail");
-        }
-    }
-
-    /*
-     * 初始化连接数据
-     */
-    private static void init() {
-        try {
-            trackerClient = new TrackerClient();
-            trackerServer = trackerClient.getConnection();
-            storageClient = new StorageClient(trackerServer, storageServer);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("init fail");
-        }
-    }
-
-    /**
-     * 上传文件
-     * @param filePath 文件路径
-     * @param fileName 文件名称
-     * @return 文件存储信息
-     * @author: wrh45
-     * @date: 2017年8月5日下午11:10:38
-     */
-    public static String[] uploadFile(String filePath, String fileName) {
-        return uploadFile(null, filePath, fileName);
-    }
-
-    /**
-     * 上传文件
-     * @param fileBuff 文件字节数组
-     * @param fileName 文件名称
-     * @return 文件存储信息
-     * @author: wrh45
-     * @date: 2017年8月5日下午11:10:38
-     */
-    public static String[] uploadFile(byte[] fileBuff, String fileName) {
-        return uploadFile(fileBuff, null, fileName);
-    }
-
-    /**
-     * 上传文件
-     * @param file_buff 文件字节数组
-     * @param filePath 文件路径
-     * @param fileName 文件名称
-     * @return 文件存储信息
-     * @author: wrh45
-     * @date: 2017年8月5日下午10:58:19
-     */
-    private static String[] uploadFile(byte[] fileBuff, String filePath, String fileName) {
-        try {
-            if (fileBuff == null && filePath == null) {
-                return new String[0];
-            }
-            // 初始化数据
-            if (storageClient == null) {
-                init();
-            }
-
-            // 获取文件扩展名称
-            String fileExtName = "";
-            if (fileName != null && !"".equals(fileName) && fileName.contains(".")) {
-                fileExtName = fileName.substring(fileName.lastIndexOf(".") + 1);
-            } else {
-                return new String[0];
-            }
-
-            // 设置图片元数据
-            NameValuePair[] metaList = new NameValuePair[3];
-            metaList[0] = new NameValuePair("fileName", fileName);
-            metaList[1] = new NameValuePair("fileExtName", fileExtName);
-            metaList[2] = new NameValuePair("fileSize", String.valueOf(fileBuff.length));
-            // 上传文件
-            String[] uploadFile = null;
-            if (fileBuff != null && filePath == null) {
-                if (fileBuff.length == 0) {
-                    return new String[0];
-                }
-                uploadFile = storageClient.upload_file(fileBuff, fileExtName, metaList);
-            } else {
-                //路径匹配Windown和Linux
-                if ("".equals(filePath) || !(filePath.matches("^[a-zA-Z]:{1}([\u4e00-\u9fa5\\w/_\\\\-]+)$") || filePath.matches("^(/[\u4e00-\u9fa5\\w_-]+)+$"))) {
-                    return new String[0];
-                }
-                uploadFile = storageClient.upload_file(filePath, fileExtName, metaList);
-            }
-            return uploadFile == null ? new String[0] : uploadFile;
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (trackerServer != null) {
-                    trackerServer.close();
-                    trackerServer = null;
-                }
-                if (storageServer != null) {
-                    storageServer.close();
-                    storageServer = null;
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return new String[0];
-    }
-
-    /**
-     * 删除服务器文件
-     * @param remoteFileName  文件在服务器中名称
-     * @author: wrh45
-     * @date: 2017年8月6日上午12:15:22
-     */
-    public static int deleteFile(String remoteFileName) {
-        try {
-            if (remoteFileName == null || "".equals(remoteFileName) || !remoteFileName.contains(groupName)) {
-                return -1;
-            }
-            if (storageClient == null) {
-                init();
-            }
-            String fileURL = remoteFileName.substring(remoteFileName.indexOf(groupName));
-            String group = fileURL.substring(0, remoteFileName.indexOf("/") + 1);
-            String fileName = fileURL.substring(remoteFileName.indexOf("/") + 2);
-            int code = storageClient.delete_file(group, fileName);
-            return code;
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("The File Delete Fail");
-        }
-        return -1;
-    }
-
-    /**
-     * 获取文件信息
-     * @param groupName  组名
-     * @param remoteFilename  远程文件名
-     * @return
-     * @author: wrh45
-     * @date: 2017年8月8日上午12:25:26
-     */
-    public static FileInfo getFileInfo(String groupName, String remoteFilename) {
-        try {
-            if (storageClient == null) {
-                init();
-            }
-            FileInfo fileInfo = storageClient.get_file_info(groupName, remoteFilename);
-            return fileInfo;
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("Get File Info Fail");
-        }
-        return null;
-    }
-}
-```
-
-
-
-### 十一 查看错误日志
-
-- tracker 日志在 tracker 的 base_path 目录下
-- storage 日志在 storage 的 base_path 目录下
-- nginx 在安装时指定的 error-log-path，默认装在 config 目录下
-
-
-
-
-
-### Nginx  附加资料
-
-![](imgs/96.png)
-
-如果匹配相同，从上往下依次匹配
-
-
-
-rewrite 语法
-
-![](imgs/97.png)
-
-内置变量

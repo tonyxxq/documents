@@ -32,74 +32,80 @@
 
    ![](imgs/28.png)
 
+#### 安装 Nginx
 
+```bash
+# 安装依赖
+yum install -y  gcc-c++ pcre-devel  openssl-devel
 
-#### 下载、源码安装、命令
+# 下载 nginx 并解压
+wget http://nginx.org/download/nginx-1.1.10.tar.gz
+tar -zxvf nginx-1.1.10.tar.gz
 
-1. 官网（nginx.org）下载 
+# 进入 nginx 目录
+cd nginx-1.1.10
 
-2. 安装 yum install -y  gcc-c++  gcc
+# 执行安装， --prefix 指定安装到的目录，--with-http_gzip_static_module 安装 gzip 模块
+# ./configure  --help 可以查看所有可以安装的模块，也可以安装外部扩展模块
+./configure  \
+	--prefix=/kkb/server/nginx \
+	--with-http_gzip_static_module \
 
-3. 安装依赖  pcre-devel  openssl-devel
+make && make install
 
-4. 解压  tar -zxvf release-1.17.3.tar.gz
+# 进入 /kkb/server/nginx/sbin,查看模块是否安装成功
+cd /kkb/server/nginx/sbin
+./nginx -V
 
-5. 进入 nginx 目录
+# 添加软链接到 /usr/local/sbin
+ln -n /usr/local/nginx/sbin/nginx /usr/local/sbin
 
-   注意：./configure  --help 可以查看有哪些模块可以选择安装，体现了高扩展特点
+# 启动 nginx，使用  nginx -h  查看可以使用的命令
+nginx
 
-   执行(设定安装目录和安装 https 模块)
+# 查看端口
+netstat  -tunlp
 
-   ```
-   ./configure  --prefix=/usr/local/nginx  --with-http_ssl_module
-   ```
-
-   ![](imgs/29.png)
-
-6. 执行编译和安装
-    `make && make install  `
-
-7. echo $PATH
-
-   添加一个软链接到 /usr/local/sbin
-
-   ```
-   ln -n /usr/local/nginx/sbin/nginx /usr/local/sbin
-   ```
-
-8. 启动
-
-   nginx
-
-9. 查看端口号
-
-   netstat  -tunlp
-
-10. 输入 nginx -h 查看可以使用的命令
-
-11. 在浏览器访问， 输入IP 或 域名测试 nginx 的安装
-
-
+# 浏览器输入nginx 服务器的 ip 进行访问
+```
 
 #### nginx 核心功能
 
 1. 请求定位
 
-   > 注意：如下 location 表示的是请求 myhtml 目录下的 h 目录下的文件
-   > root 可以是相对目录和绝对目录
+   > **语法规则**：location     [=|~|~*|^~]  /uri/     {...}
    >
-   > 访问结果是：root + 地址栏请求的路径 = 最终文件所在路径
+   > - =    开头表示精准匹配
+   > - ~    开头表示区分大小写的正则匹配
+   > - ~*  开头表示不区分大小写的正则匹配
+   > - !~   和 !~*  开头表示匹配的反面
+   > - / 通用匹配 任何请求都会匹配到
+   >
+   > 
+   >
+   > 匹配顺序：首先匹配 = ，其次匹配 ^~， 匹配内容最长的，最后 / 通用匹配，匹配到其中一个就返回结果
 
    ```perl
+   # root 和 alias 的区别
+   
+   # 匹配为 /myhtml/h
    location /h {
        root   myhtml;
        index  default.html index.htm;
    }
+   
+   # 匹配为 /myhtml，且 alias 最后必须带 /
+   location /h {
+       alias   myhtml/;
+       index  default.html index.htm;
+   }
+   
+   # root 和 alias 可以匹配相对目录（相对 nginx_home）也可以匹配绝对目录
    ```
 
 2. 静态代理
 
-   nginx 对静态资源的处理比 Tomcat 性能更好，效率更高吗，且为了减少对 Tomcat 服务器的压力，使用 Nginx 作为静态代理服务器。
+   nginx 对静态资源的处理比 Tomcat 性能更好，效率更高，且为了减少对 Tomcat 服务器的压力，使用 Nginx 作为静态代理服务器。
 
    
 
@@ -113,7 +119,7 @@
    >
    > *：任意个数
    >
-   > \\ .： .
+   > \\ .： .小数点 . 因为 . 是特殊字符进行一下转义
    >
    > (jpg|js|css|html)：匹配其中任意一个
 
@@ -138,8 +144,6 @@
    	root   static;
    }
    ```
-
-   注意：当请求能匹配到多个 location 的时候会报错，访问不到
 
 3. 负载均衡
 
@@ -229,4 +233,107 @@
 6. Nginx 性能调优
 
     <https://blog.csdn.net/lamp_yang_3533/article/details/80383039>
+
+#### rewrite
+
+> 语法 rewrite regex replacement [flag];
+>
+> **rewrite**的含义：该指令是实现URL重写的指令
+> **regex**的含义：用于匹配URI的正则表达式
+> **replacement**：将regex正则匹配到的内容替换成 replacement
+> **flag: flag**标记
+>
+> flag有如下值：
+>
+> **last:** 本条规则匹配完成后，继续向下匹配新的location URI 规则。(不常用)
+> **break:** 本条规则匹配完成即终止，不再匹配后面的任何规则(不常用)
+> **redirect:** 返回302临时重定向，浏览器地址会显示跳转新的URL地址
+> **permanent:** 返回301永久重定向。浏览器地址会显示跳转新的URL地址
+
+rewrite 可以在 server 和 location 块中使用
+
+1. 在 server 块中
+
+   > 域名跳转需要加 http://
+
+   ```perl
+   # 浏览器访问当前主机都跳转到为 www.baidu.com
+   rewrite ^/(.*)$ http://www.baidu.com/$1 redirect;
+   
+   # 如果是移动端跳转到移动端页面
+   if ($http_user_agent ~* "(Android)|(iPhone)|(Mobile)|(WAP)|(UCWEB)" ){
+       rewrite ^(.*)$    http://www.storeage.com/    permanent;
+       # 带上域名后面的信息
+       # rewrite ^/(.*)$    http://www.storeage.com/$1  permanent;
+   }
+   ```
+
+2. 在 location 块中
+
+   ```perl
+   # $n 和 $t 是前面定义的变量
+   rewrite ^/group1/(.*)$ /group1/$n.$t 是前面定义的变量  break;
+   ```
+
+#### if
+
+> 语法: `if (condition) {...}`
+>
+> - 变量名: 如果变量值为0, 或''(空字符串) 则为false
+> - 使用 = 和 != 运算符比较变量和字符串
+> - 使用 ~ (区分大小写的匹配) 和 `~*` (不区分大小写) 运算符，（可以理解为 like，模糊匹配）
+> - -f: 文件是否存在
+> - -d: 目录是否存在
+> - -e: 检查文件, 目录, 符号链接 是否存在
+> - -x: 检查可执行文件
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

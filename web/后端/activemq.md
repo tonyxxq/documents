@@ -370,13 +370,52 @@ ActiveMQ 支持的传输协议有多种：TCP、UDP、NIO(基于TCP)、SSL、HTT
 
 ​	![](imgs/156.png)
 
+![](imgs/157.png)
 
+可以看出，修改配置很简单，其他协议都是一样的修改
 
 ### 七、消息消费者处理
 
+![](imgs/158.png)
+
+![](imgs/160.png)
+
+![](imgs/159.png)
+
+ ![](imgs/161.png)
 
 
 
+ACK 模型：前面讲过的四种
+
+应答类型
+
+![](imgs/162.png)
+
+ 如果 ACK 类型是 3，重发就是下面的重发机制
+
+![](imgs/163.png)
+
+### 同步接收和异步接收
+
+> 同步可以 pull 和 push，异步只能 push
+>
+> 这里说的 pull 和 push 是 broker 的 操作
+
+![](imgs/164.png)
+
+![](imgs/165.png)
 
 
 
+### ActivateMQ 集群
+
+![](imgs/168.png)
+
+![](imgs/166.png)
+
+生产者
+
+![](imgs/167.png)
+
+### Spring 整合 ActivateMQ

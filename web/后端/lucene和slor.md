@@ -36,9 +36,9 @@
 
 创建索引流程
 
-数据库表的记录 -> 对应 document
+table -> document
 
-数据库表的 row -> 对应 field
+row -> field
 
 
 
@@ -110,6 +110,7 @@ Luke 工具
 
 - 扩展词库
 
+  ![](imgs/175.png)
 
 > 注意：创建索引和搜索使用的分词器必须一致
 
@@ -125,21 +126,15 @@ Luke 工具
 
 - 部署 solr 服务器
 
-  > 注意： solrhome  是 solr 服务器配置的主目录，该目录下配置信息和索引库都在该目录下，solrhome 包括多个 solrcore，solrcore就好比数据库的一张表，可以进行单独的索引和查询
-
   ```bash
-  # 安装 jdk，
+# 安装 jdk，
   # 略...
   
   # 下载 solr 并解压，修改名
   wget http://mirror.bit.edu.cn/apache/lucene/solr/7.7.2/solr-7.7.2.tgz
-  tar -zxvf solr-7.7.2.tgz -C /usr/local/kkb/solr
+  tar -zxvf solr-7.7.2.tgz -C /usr/local/kkb
   mv solr-7.7.2/ solr
   
-  # 创建一个 solrcore
-  # 进入 solr 的 bin 目录下，执行如下， core1 表示 core 名称
-  ./solr start -force
-  ./solr create_core  -c new_core -force
   
   
   #################### 使用自带的 jetty 启动服务器（注意：关闭防火墙） ##################
@@ -156,44 +151,46 @@ Luke 工具
   #下载 tomcat 并解压，修改名称为 tomcat-solr
   wget https://mirrors.cnnic.cn/apache/tomcat/tomcat-9/v9.0.24/bin/apache-tomcat-9.0.24.tar.gz
   tar -zxvf apache-tomcat-9.0.24.tar.gz  -C /usr/local/kkb
-  mv apache-tomcat-9.0.24/ tomcat-solr
+  mv -r apache-tomcat-9.0.24/ tomcat-solr
   
   # 设置 solrhome，复制 /usr/local/kkb/solr/server/solr 到 solrhome
   mkdir /usr/local/kkb/solrhome
-  cp -r /usr/local/kkb/solr/server/solr/* /usr/local/kkb/solrhome
+  cp -r /usr/local/kkb/solr/server/solr /usr/local/kkb/solrhome
   
-  # 复制 solr-webapp 下的 webapp 内容到 tomcat 的 webapp 目录下
+  # 复制 solr-webapp 下的 webapp 内容到 tomcat webapp 目录下
   # 修改名称 webapp 为 solr
-  cp -r  solr/server/solr-webapp/webapp tomcat-solr/webapps/solr
+  cp -r  solr/server/solr-webapp/webapp/ tomcat-solr/webapps/
+  cd tomcat-solr/webapps/
+  mv webapp solr
   
   # 复制 solr/server/lib/ext/ 下所有 jar 到 tomcat/webapp/solr/WEB-INF/lib/ 下
   # 复制 solr/server/lib 下所有 metrics 开头的jar 到 tomcat/webapp/solr/WEB-INF/lib/下
   # 复制 solr/dist/下 的 solr-clustering-7.7.2.jar solr-dataimporthandler-extras-   # 7.7.2.jar和solr-dataimporthandler-7.7.2.jar 三个jar包复制到tomcat/webapp/solr/
   # WEB-INF/lib/下
   cp  /usr/local/kkb/solr/server/lib/ext/* .
-  cp  /usr/local/kkb/solr/server/lib/metrics* .
+  cp  /usr/local/kkb/solr/server/lib/metrics* .\
   cp  /usr/local/kkb/solr/dist/solr-clustering-7.7.2.jar .
   cp  /usr/local/kkb/solr/dist/solr-dataimporthandler-extras-7.7.2.jar .
   cp  /usr/local/kkb/solr/dist/solr-dataimporthandler-7.7.2.jar .
-
+  
   # 在 tomcat/webapp/solr/WEB-INF/ 创建 classes
-# 复制 solr/resources 下的所有文件到 tomcat/webapp/solr/WEB-INF/classes
+  # 复制 solr/resources 下的所有文件到 tomcat/webapp/solr/WEB-INF/classes
   mkdir classes
-cp /usr/local/kkb/solr/server/resources/*  .
+cp /usr/local/kkb/solr/resources/* .
   ```
-  
+
   修改 tomcat/webapp/solr/WEB-INF/web.xml
-  
+
   ```xml
   <!--注释掉下面代码-->
   <!--<security-constraint>
-    <web-resource-collection>
+      <web-resource-collection>
           <web-resource-name>Disable TRACE</web-resource-name>
-        <url-pattern>/</url-pattern>
+          <url-pattern>/</url-pattern>
           <http-method>TRACE</http-method>
-      </web-resource-collection>
+    </web-resource-collection>
       <auth-constraint/>
-  </security-constraint>
+</security-constraint>
   <security-constraint>
       <web-resource-collection>
           <web-resource-name>Enable everything but TRACE</web-resource-name>
@@ -207,63 +204,90 @@ cp /usr/local/kkb/solr/server/resources/*  .
       <env-entry-name>solr/home</env-entry-name>
       <env-entry-value>/usr/local/kkb/solrhome </env-entry-value>
       <env-entry-type>java.lang.String</env-entry-type>
-</env-entry>
+  </env-entry>
   ```
   
   启动 tomcat
-  
+
   浏览器访问（IP 根据自己服务器地址更换）
   
-  http://192.168.1.105:8080/solr/index.html
+  http://192.168.1.105:8080/solr
   
   
-  
-  配置中文分词器 IK-analyzer
-  
-  ```bash
-  # 下载 ik-analyzer
-  # 略...
-  
-  # 复制 jar 到 /WEB-INF/lib
-  mv ik-analyzer-solr5-5.x.jar /usr/local/kkb/tomcat-solr/webapps/solr/WEB-INF/lib/
-  
-  # 将 resources 目录下的其他 3 个配置文件放入 tomcat 的 webapp/WEB-INF/classes/ 目录下
-  mv * /usr/local/kkb/tomcat-solr/webapps/solr/WEB-INF/classes/
-  ```
-  
-  编辑 solrcore/conf  下的的 `managed-schema`，添加`ik分词器`
-  
-  ```xml
-  <!-- ik分词器 -->
-  <fieldType name="text_ik" class="solr.TextField">
-    <analyzer type="index">
-        <tokenizer class="org.wltea.analyzer.lucene.IKTokenizerFactory" useSmart="false" conf="ik.conf"/>
-        <filter class="solr.LowerCaseFilterFactory"/>
-    </analyzer>
-    <analyzer type="query">
-        <tokenizer class="org.wltea.analyzer.lucene.IKTokenizerFactory" useSmart="true" conf="ik.conf"/>
-        <filter class="solr.LowerCaseFilterFactory"/>
-    </analyzer>
-  </fieldType>
-  ```
-  
-  启动 tomcat
-  
-  访问： http://192.168.1.105:8080/solr/index.html
-  
-  
-  
-  ![](imgs/186.png)
-  
-  
-  
-  可以在 ext.dict 中添加扩展词汇
-  
-- 
+
+
+
+
+
+
+
+![](imgs/176.png)
+
+![](imgs/177.png)
+
+进入 example 目录下 
+
+slor 就是 SolrCore
+
+![](imgs/178.png)
+
+![](imgs/179.png)
+
+
+
+使用 tomcat 部署
+
+![](imgs/180.png)
+
+![](imgs/181.png)
+
+![](imgs/182.png)
+
+mkdir classes
+
+
+
+cp resources/log4j  ../classes
+
+
+
+vim  web.xml 
+
+![](imgs/183.png)
+
+
+
+配置中文分词器
+
+![](imgs/184.png)
+
+​	
+
+​	![](imgs/185.png)
 
 solrcore 下有个 schema.xml（重要）
 
+
+
+tomcat 的几个端口
+
+
+
+启动完成之后 打开网址
+
+
+
+<http://192.168.1.105:8080/solr//index.html#/>
+
+
+
 text_id
+
+
+
+ntstat  -plnt
+
+
 
 #### SolrCloud  介绍
 

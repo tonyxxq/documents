@@ -5,13 +5,13 @@
 wget https://repo.huaweicloud.com/java/jdk/11.0.2+7/jdk-11.0.2_linux-x64_bin.tar.gz
 
 # 解压到指定目录
-mkdir /usr/java
-tar -zxvf jdk-11.0.2_linux-x64_bin.tar.gz  -C /usr/java
+mkdir /usr/local/java
+tar -zxvf jdk-11.0.2_linux-x64_bin.tar.gz  -C /usr/local/java
 
 # 配置环境变量
 vim /etc/profile
 # 添加如下内容
-JAVA_HOME=/usr/java/jdk-11.0.2
+JAVA_HOME=/usr/local/java/jdk-11.0.2
 export PATH=$JAVA_HOME/bin:$PATH
 
 # 更新环境变量

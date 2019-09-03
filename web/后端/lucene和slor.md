@@ -20,11 +20,8 @@
 
   ![](imgs/169.png)
 
-  
-
   实时搜索与传统搜索的区别
 
-  
 
 ## 三、 全文检索的流程
 
@@ -243,6 +240,12 @@ Luke 工具
 
 ​		可以在 ext.dict 中添加扩展词汇
 
+- schema.xml
+
+  > 配置 field 域，5 个标签
+
+
+
 
 
 ​	
@@ -273,9 +276,116 @@ ntstat  -plnt
 
 #### SolrCloud  介绍
 
+SolrCloud 是 Solr 提供的，基于 Solr 和 zooKeeper 分布式搜索方案
+
+![](imgs/187.png)
+
+架构图
+
+![](imgs/188.png)
+
+![](imgs/189.png)
 
 
 
+![](imgs/190.png)
+
+SolrCloud 索引流程分析
+
+![](imgs/191.png)
+
+SolrCloud 搜索流程分析
+
+![](imgs/192.png)
 
 
 
+SolrCloud 扩展 Shard 流程分析
+
+
+
+## SolrCloud 搭建
+
+> 需要搭建 zookeeper 集群和 solr 集群
+
+![](imgs/193.png)
+
+- 搭建 ZooKeeper 集群
+
+  ![](imgs/195.png)
+
+  ​					
+
+  ​					![](imgs/196.png)
+
+  ​		![](imgs/197.png)
+
+  ​		![](imgs/198.png)
+
+  ​			查看问题
+
+  ​			tail -100f  conf/zookeeper.cout
+
+  > 
+  >
+  > 修改配置文件
+
+  ```
+  
+  ```
+
+  > 修改 myid
+
+- 搭建 Solr 集群
+
+  ![](imgs/194.png)
+
+  ​		第四步：
+
+  ​		![](imgs/199.png)
+
+  
+
+  ​	![](imgs/200.png)
+
+  ​	![](imgs/201.png)
+
+  ​     启动 是 solr服务（启动 tomcat）
+
+  ​	
+
+  ![](imgs/202.png)
+
+  ​		![](imgs/203.png)
+
+
+
+使用 SolrJ 的使用
+
+> 注意：add 必须有 id 域
+
+![](imgs/204.png)
+
+​			![](imgs/205.png)
+
+​				
+
+
+
+![](imgs/206.png)
+
+​					
+
+​			![](imgs/208.png)
+
+![](imgs/207.png)
+
+
+
+​					
+
+​						![](imgs/209.png)
+
+
+
+​		

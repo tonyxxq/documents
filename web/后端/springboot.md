@@ -182,7 +182,7 @@
 
   1. 在 Spring Boot 主类上添加 @EnableTransactionManagement
 2. 在 Service方法 添加 @Transactional
-  
+
 - 使用日志
 
   Spring Boot 使用 logbacj， 与 log4j 出自同一人，但比log4j 更加高级

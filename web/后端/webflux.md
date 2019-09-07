@@ -139,7 +139,7 @@ public class AsyncServlet extends HttpServlet {
 
 
 
-H5 标准中新增 SSH,可以方便的得到实时消息推送（火狐浏览器不支持）
+H5 标准中新增 SSE,可以方便的得到实时消息推送（火狐浏览器不支持）
 
 SSE 和 WebScoket的区别 
 
@@ -278,7 +278,6 @@ show tables;
 t_student;
 db.t_student.find();
 db.t_student.find({age:{$gte:21, $lt:25}}); # 大于等于 21 小于 25
-
 ```
 
 

@@ -58,12 +58,17 @@
 
 ## Spring AOP 原理分析
 
-> OOP 的继承是纵向抽取，AOP 是横向抽取，比如：性能检测，日志记录，事务处理等，是对业务逻辑的增强
+> OOP 的继承是纵向抽取，AOP 是横向抽取
+>
+> 将业务逻辑和系统处理的代码（性能检测，日志记录，事务处理等）解耦，是对业务逻辑的增强
 
 相关术语：
 
 1. 连接点
+
 2. 切入点
+
+   ....
 
 
 
@@ -135,7 +140,7 @@ public class MyProxyUtils {
 
 
 
-#### Spring AOP 的使用
+#### Spring AOP 的使用(Aspect)
 
 - xml 的方式
 
@@ -185,7 +190,7 @@ public class MyProxyUtils {
      >
      > 修饰符：可省略
      >
-     > 返回值类型：**必须要**，但是可以使用 \* 通配符
+     > 返回值类型：必须要，但是可以使用 \* 通配符
      >
      > 包名：多级包之间使用.分割，包名可以使用  \* 代替，多级包名可以使用多个 \* 代替， 如果想省略          中间的包名可以使用 ..
      >
@@ -254,7 +259,64 @@ public class MyProxyUtils {
      
      ```
 
+
+
+
+### Spring 操作数据库
+
+#### JdbcTemplate
+
+#### JdbcDaoSupport
+
+
+
+### Spring 事务管理
+
+#### 编程式事务管理（不推荐）
+
+#### 声明式事务管理（重点）
+
+- 基于 AspectJ + xml 方式
+
+  ```xml
+  <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+      <property name="dataSource" ref="dataSource"></property>
+  </bean>
+  
+  <!--处理器就是 TransactionInterceptor 类 实现了 MethodInterceptor 接口-->
+  <tx:advice id="txAdvice" transaction-manager="transactionManager">
+      <!--设置事务管理信息-->
+      <tx:attributes>
+          <!--增删改使用 REQUIRED 事务行为-->
+          <!--查询使用 READ-ONLY-->
+          <tx:method name="transfer" propagation="REQUIRED"/>
+      </tx:attributes>
+  </tx:advice>
+  
+  <aop:config>
+      <!--Spring 已经实现了该增强功能， Spring 使用的是 MethodInterceptor 接口方式实现的-->
+      <aop:advisor advice-ref="txAdvice" pointcut="execution(* *..*.*ServiceImpl.*(..))"></aop:advisor>
+  </aop:config>
+  ```
+
+  
+
+- 基于 AspectJ + 注解 方式
+
+  1. 配置
+
+     ```xml
+     <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+         <property name="dataSource" ref="dataSource"></property>
+     </bean>
+     
+     <tx:annotation-driven transaction-manager="transactionManager"/>
+     ```
+
      
 
+  > @Transactional
 
+  
 
+  

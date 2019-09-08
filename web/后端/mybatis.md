@@ -78,11 +78,15 @@
 
 4. 添加 mapper
 
+   > 注意：namespace 表示接口路径，如果mapper+接口的方式，则必须和接口路径一致
+
    ```xml
    <?xml version="1.0" encoding="UTF-8" ?>
    <!DOCTYPE mapper
            PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
            "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+   
+   <!--注意：namespace 表示接口的名称，如果使用接口，则必须和接口路径一直-->
    <mapper namespace="com.kkb.mapper.DeptMapper">
        <select id="findDept" resultType="Dept">
          select * from  dept;

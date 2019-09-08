@@ -22,6 +22,12 @@
 
 <a href="jdk安装.md">jdk安装</a>
 
+<a href="maven.md">maven</a>
+
+<a href="mybatis.md">mybatis</a>
+
+<a href="mongodb.md">mongodb</a>
+
 <a href="微信登录文档.pdf">微信登录</a>
 
 

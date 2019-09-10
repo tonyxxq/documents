@@ -1,3 +1,5 @@
+
+
 ## Spring Cloud
 
 #### Spring Cloud 入门
@@ -23,20 +25,21 @@
 
    **总结：目前来说对于小型业务可选择使用 Dubbo， 总体上 Spring Cloud 要比 Dubbo 更好**
 
-5. 实现一个简单的 provider 和 consumer（restful 格式)
+5. 实现一个简单的 provider 和 consumer
 
    - provider 实现简单的对数据库的增、删、改、查接口，并暴露 REST 的外界访问
 
    - consumer
 
      > 使用添加 RestTemplate 进行数据访问
-
+>
+     > RestTemplate  属于在 `spring-web` 包下，`spring-boot-starter-web` 依赖 `spring-web` 所以不用再导入依赖
+     
      ```java
      @Configuration
      public class DepartCodeConfig {
      
          @Bean
-         @LoadBalanced //  开启消费端的负载均衡，默认使用轮询
          public RestTemplate restTemplate(){
              return new RestTemplate();
          }
@@ -44,9 +47,9 @@
      ```
      
      > handler 注入 RestTemplate， 调用 provider 接口
-   >
-     > 可以看到 RestTemplate 有局限，返回值可能不是我们想要的结果，比如 delete 和 put 返回都是 void
-
+     >
+  > 可以看到 RestTemplate 有局限，返回值可能不是我们想要的结果，比如 delete 和 put 返回都是 void
+     
      ```java
      @RestController
      @RequestMapping("/consumer/depart")
@@ -215,62 +218,40 @@
          enable-self-preservation: false
      ```
 
-3. 创建提供者
+3. 创建   Eureka   客户端
 
-   - 添加 Eureka  客户端依赖
+   > 因为消费者和服务者在 Eureka Server 看来都是作为 Eureka Client 存在的，因为消费者可以作为服务者，服务者也可作为消费者，所以**他们的eureka 客户端创建流程是一样的**
+
+   - 添加 Eureka  client 依赖
 
      ```xml
-     <!--添加 eureka 客户端依赖-->
      <dependency>
      	<groupId>org.springframework.cloud</groupId>
      	<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
      </dependency>
      
-   mysql 等依赖省略......
+     其他需要的依赖自行再配置....
      ```
-     
+
    - 在配置文件中执行要注册的 Eureka 注册中心
 
      ```yml
      server:
-       port: 8081
+         port: 8081
      
+     # 暴露服务名称
      spring:
-       jpa:
-         # 应用初次启动时是否创建表，默认 false
-         generate-ddl: true
-         show-sql: true
-         # 设置应用启动时，不重新建表
-         hibernate:
-           ddl-auto: none
-       datasource:
-         type: com.alibaba.druid.pool.DruidDataSource
-         # 下面的多一个 / 表示 localhost:3306 的简写
-         url: jdbc:mysql:///test?useUnicode=true&amp;characterEncoding=utf8
-         username: root
-         password: 123456
-         driver-class-name: com.mysql.jdbc.Driver
-     
-       # 指定当前微服务对象（提供者）暴露的名称
        application:
-         name: kkbmsc-provider-depart
+          name: kkbmsc-provider-depart
      
-     logging:
-       pattern:
-         console: level-%level %msg%n
-       level:
-         root: info # Spring Boot 启动时的日志级别
-         org.hibernate: info # hibernate 运行日志级别
-         org.hibernate.type.descriptor.sql.BasicBinder: trace # 显示查询参数
-         org.hibernate.type.descriptor.sql.BasicExtractor: trace # 显示查询结果
-         com.kaikeba.provier: debug
      
-     # 配置 eureka 注册中心
      eureka:
        client:
          service-url:
-           defaultZone: http://localhost:8000/eureka
-       # instance: xxx 可以修改服务名称，默认为主机名 + 微服务名 + 端口号  
+         defaultZone: http://localhost:8000/eureka  # eureka 注册中心
+       instance:
+       	prefer-ip-address: true
+     	hostname: localhost
      ```
 
    - 在启动类上添加 `@EnableEurekaClient` 注解
@@ -283,99 +264,264 @@
 
      当点击微服务名称，出现错误页面，因为没有启用 acturator，默认会使用 acturator/info 接口下的数据
 
-4. 创建消费者
+   - 调用微服务（使用 RestTemplate 或 后面介绍的 OpenFeign）
 
-   - 添加 Eureka 客户端依赖
+     > 下面使用的是 RestTemplate ，
+     >
+     > 同时因为可能有多台服务器提供相同的服务，所以需要使用负载均衡器去选择指定的微服务服务器，使用位于`spring-cloud-commons`包`LoadBalancerClient实例`，在 `spring-cloud-commons` 包下还有 `DiscoveryClient` 和 `ServiceRegistry` 实例
+     >
+     > 使用如上实例需在启动类上添加 `@EnableDiscoveryClient` 注解
 
-     ```xml
-     <!--添加 eureka 客户端依赖-->
-     <dependency>
-     	<groupId>org.springframework.cloud</groupId>
-     	<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
-     </dependency>
-     
-     ......
-     ```
+     开启服务发现
 
-   - 配置文件中指定 Eureka 注册中心
+     - 入口类添加注解 `@EnableDiscoveryClient` ，开启服务发现
+
+     - 实例化配置  RestTemplate bean 对象
+
+       ```java
+       @Configuration
+       public class DepartCodeConfig {
+       
+           @Bean
+           // 开启消费端的负载均衡（默认使用轮询），访问的时候自动进行负载均衡（使用微服务名）
+           // 如果这里不开启也可以在 Controller 方法中使用 loadBalancerClient 进行自己选择
+           @LoadBalanced 
+           public RestTemplate restTemplate(){
+               return new RestTemplate();
+           }
+       }
+       ```
+
+     - 访问微服务
+
+       ```java
+       @GetMapping("/depart/{id}")
+       public Dept getDeprt(@PathVariable Integer id){
+       
+           // 访问的微服务名
+           String serviceId = "KKBMSC-PROVIDER-DEPART";
+           
+           // 如果 RestTemplate 配置类开启了 @LoadBalanced，使用微服务名进行直接访问
+           // String url = "http://"+  serviceId+ "/provider/depart/" + id;
+           // Dept dept = restTemplate.getForObject(url, Dept.class);
+       
+           // 如果没有，使用 loadBalancerClient
+           ServiceInstance instance = loadBalancerClient.choose(serviceId);
+           String url = "http://" + instance.getHost() + ":" + instance.getPort() + "/provider/depart/" + id;
+           Dept dept = restTemplate.getForObject(url, Dept.class);
+       
+           return dept;
+       }
+       ```
+
+     - 服务发现，获取提供的微服务
+
+       ```java
+       @RestController
+       @RequestMapping("consumer")
+       public class DeprtController {
+       
+           @Autowired
+           private DiscoveryClient discoveryClient;
+       
+           @GetMapping("/discovery")
+           public Object discoveryHandle() {
+               // 获取服务注册列表中所有微服务
+               List<String> springApplicationNames = discoveryClient.getServices();
+               for (String name : springApplicationNames) {
+                   // 获取提供指定微服务名称的所有提供者主机
+                   List<ServiceInstance> instances = discoveryClient.getInstances(name);
+                   for (ServiceInstance instance : instances) {
+                       String host = instance.getHost();
+                       int port = instance.getPort();
+                       System.out.println(host + "：" + port);
+                   }
+               }
+               return springApplicationNames;
+           }
+       }
+       ```
+
+4. 搭建 Eureka Server 集群
+
+   > 为了体现集群之间的关系
+   >
+   > eureka7001 中应该挂上 eureka7002 和 eureka7003；
+   >
+   > eureka7002 中应该挂上 eureka7001 和 eureka7003；
+   >
+   > eureka7003 中应该挂上 eureka7001 和 eureka7002
+
+   ![](imgs/272.png)
+
+   - Eureka Server 修改配置文件并启动
+
+     例如：eureka1 配置文件修改为（注意： hostname 不要指定为 localhost 了，因为多台服务器没法区分），如果在本地把 host 映射到 127.0.0.1
 
      ```yml
-     spring:
-       application:
-         name: kkbmsc-consumer-depart
+     server:
+       port: 8001
      
-     # 配置 eureka 注册中心
      eureka:
+       instance:
+         hostname: eureka1.com
        client:
+         register-with-eureka: false
+         fetch-registry: false
          service-url:
-           defaultZone: http://localhost:8000/eureka
-     ```
-     
-   - 装配 ResTemplate 实例对象
-
-     ```java
-     @Configuration
-     public class DepartCodeConfig {
-     
-         @Bean
-         @LoadBalanced //  开启消费端的负载均衡，默认使用轮询
-         public RestTemplate restTemplate(){
-             return new RestTemplate();
-         }
-     }
-     ```
-     
-   - 在启动类上添加 `@EnableEurekaClient` 注解
-
-   - 调用 provider
-
-5. 服务发现
-
-   - 入口类添加注解 `@EnableDiscoveryClient` ，开启服务发现
-
-   - 注入  `DiscoveryClient`
-
-   - 获取微服务和微服务主机端口等信息
-
-     ```java
-     @GetMapping("/discovery")
-     public Object discoveryHandle() {
-         // 获取服务注册列表中所有微服务
-         List<String> springApplicationNamse = discoveryClient.getServices();
-         for (String name : springApplicationNamse) {
-             // 获取提供指定微服务名称的所有提供者主机
-             List<ServiceInstance> instances = discoveryClient.getInstances(name);
-             for (ServiceInstance instance : instances) {
-                 String host = instance.getHost();
-                 int port = instance.getPort();
-                 System.out.println(host + "：" + port);
-             }
-         }
-         return springApplicationNamse;
-     }
+           defaultZone: http://eureka2.com:8002/eureka/,http://eureka3.com:8003/eureka/
      ```
 
-6. Eureka 集群
+   ​		其他的机器的配置文件类似修改.....
 
-   在** Eureka 的每个服务端和客户端**的主配置文件上修改 defaultZone 为多个：
+   ​		启动每台服务器并访问 http://eureka1.com:8001 可以看到如下
 
-   ```yml
-   defaultZone: http://eureka1.com:8100/eureka,http://eureka2.com:8200/eureka,http://eureka3.com:8300/eureka
-   ```
+   ​		![](imgs/273.png)
 
-7. Eureka 与 ZooKeeper 对比
+   ​		这样 Eureka Server 集群服务器之间通过复制完成数据的同步
+
+   - Eureka Client  配置文件修改
+
+     > 只需多添加几个注册中心就可以了
+
+     ```properties
+     eureka.client.service-url.defaultZone: http://eureka1.com:8001/eureka,http://eureka2.com:8002/eureka,http://eureka3.com:8003/eureka
+     ```
+
+     这样当其中一部分 Eureka Server  挂掉，也不会让系统瘫痪，并且 Eureka Server 有缓存机制，即使所有的 Eureka Server  全部挂掉也不会影响其访问。体现了高可用
+
+5. Eureka 与 ZooKeeper 设计原则对比
 
    Eureka: AP 原则，保证可靠性，丢掉了一致性
 
    zooKeeper：CP 原则，保证一致性，丢掉了可靠性
 
-#### 声明式 REST 客户端 OpenFeign
+#### Ribbon
+
+1. 概述：
+
+   Ribbon 简介：Ribbon 是 Netflix 公司开源的一个负载均衡项目，是一个负载均衡器，运行在消费者端
+
+   上面的负载均衡算法的，上面负载均衡的底层都是 Ribbon 支持
+
+2. RIbbon 自带的负载均衡算法
+
+   下面的类都是实现的 IRule 接口的实现类
+
+   - RoundRobinRule
+
+     轮询策略（**默认**）
+
+   - BestAvailableRule
+
+     选择并发量最小的 provider，即连接的消费者数量最少的 provider。其会遍历服务列表中的每一个 provider，选择当前连接数量 minimalConcurrentConnections 最小的 provider.
+
+   - AvailabilityFilteringRule
+
+     过滤掉由于连续连接故障处于断路跳闸状态的 provider，或已经超过连接极限的 provider，对剩余 provider 采用**轮询**策略
+
+   - ZoneAvoidanceRule
+
+     复合判断 provider 所在区域的性能及 provider 的可用性选择服务器
+
+   - RandomRule
+
+     随机找一个
+
+   - RetryRule
+
+     先按照**轮询**策略获取 provider，若失败，则在指定的时间内重试，默认的时限为 500 毫秒
+
+   - WeightedResponseTimeRule
+
+     权重响应时间策略，根据每个 provider 的平均响应时间计算其权重，响应时间越快权重越大，被选中的几率越高
+
+3. 自定义负载均衡算法
+
+   > 从 所有 provider 中排除指定端口的 provider, 在剩余的 provider 中进行随机选择
+
+   - 实现负载均衡算法
+
+     ```java
+     public class CustomRule implements IRule {
+         private ILoadBalancer lb;
+         private List<Integer> excludePorts;
+     
+         public CustomRule() {
+         }
+     
+         public CustomRule(List<Integer> excludePorts) {
+             this.excludePorts = excludePorts;
+         }
+     
+         @Override
+         public Server choose(Object key) {
+             // 所有的 server
+             List<Server> servers = lb.getReachableServers();
+     
+             // 获取所有排除指定端口的 server
+             List<Server> avibalServers = this.getAvailableServers(servers);
+     
+             // 随机选择一个 server
+             return this.getAvailableRandomServers(avibalServers);
+         }
+     
+         @Override
+         public void setLoadBalancer(ILoadBalancer lb) {
+             this.lb = lb;
+         }
+     
+         private Server getAvailableRandomServers(List<Server> availableServers) {
+             int index = new Random().nextInt(availableServers.size());
+             return availableServers.get(index);
+         }
+     
+         private List<Server> getAvailableServers(List<Server> servers) {
+             // 若不存在排除的 server，直接返回
+             if (excludePorts == null || excludePorts.size() == 0) {
+                 return servers;
+             }
+     
+             // 过滤掉不可用的 server
+             List<Server> availableServers = servers
+                     .stream()
+                     .filter(s -> !excludePorts.contains(s.getPort()))
+                     .collect(Collectors.toList());
+             return availableServers;
+         }
+     
+         @Override
+         public ILoadBalancer getLoadBalancer() {
+             return this.lb;
+         }
+     }
+     ```
+
+   - 配置 bean
+
+     > 下次访问的时候默认就使用如下配置的负载均衡算法
+
+     ```java
+     // 设置负载均衡算法为 “随机算法”
+     // public IRule loadBalanceRule() {
+     //	public IRule loadBalanceRule(){
+     //	return new RandomRule();
+     //}
+     
+     // 设置负载均衡算法为 “自定义算法”    
+     @Bean
+     public IRule loadBalanceRule() {
+         List<Integer> ports = new ArrayList<>();
+         ports.add(8082);
+         return new CustomRule(ports);
+     }
+     ```
+
+#### OpenFeign
 
  1. 概述
 
-    > RestTemplate：删、改没有返回值，而且和服务的关系不是很紧密（使用的 url，一般喜欢使用接口），    所以引入了 OpenFeign
-
-![](imgs/44.png)
+    OpenFeign 比 RestTemplate 更加的简洁，只需要设置微服务的名称，不需设置在访问的时候设置IP、端口，是面向接口开发的，更符合我们的开发习惯
 
 2. 使用 OpenFeign：
 
@@ -388,15 +534,15 @@
      </dependency>
      ```
 
-   - 添加 service 接口，并制定其所绑定的微服务
+   - 添加 service 接口，并绑定微服务
 
-     > 接口就是 provider 的 service 接口
+     > 接口需要指定 REST 访问地址， 参数和返回类型
      >
-     > url 注解就是和 providr controller 一致
+     > 类上添加微服务 FeignClient 注解并指定服务名称
 
      ```java
      @Service // 只是为了让 idea 不报错
-     @FeignClient("kkbmsc-providerr-depart") // 指定微服务的名称
+     @FeignClient("kkbmsc-provider-depart") // 指定微服务的名称
      @RequestMapping("/provider/depart")
      public interface DepartService {
          @PostMapping("/save")
@@ -416,7 +562,7 @@
      }
      ```
 
-   - 修改处理器，通过 service 接口消费微服务，替换之前的 `RestTemplate`
+   - 修改处理器，通过 service 接口消费微服务
 
      ```java
      @RestController
@@ -468,170 +614,36 @@
      }
      ```
 
-3. Ribbon 负载均衡展示
-
-   > 创建 3 个provider，启动之后可以查看到可以查看到有三台主机提供相同的服务
-
-   ![](imgs/45.png)
-
-4. Ribbon 负载均衡算法 IRule
-
-   RIbbon 自带的负载均衡算法， 都是 IRule 接口的实现类
-
-   - RoundRobinRule
-
-     轮询策略（**默认**）
-
-   - BestAvailableRule
-
-     选择并发量最小的 provider，即连接的消费者数量最少的 provider。其会遍历服务列表中的每一个 provider，选择当前连接数量 minimalConcurrentConnections 最小的 provider.
-
-   - AvailabilityFilteringRule
-
-     过滤掉由于连续连接故障处于断路跳闸状态的 provider，或已经超过连接极限的 provider，对剩余 provider 采用**轮询**策略
-
-   - ZoneAvoidanceRule
-
-     复合判断 provider 所在区域的性能及 provider 的可用性选择服务器
-
-   - RandomRule
-
-     随机找一个
-
-   - RetryRule
-
-     先按照**轮询**策略获取 provider，若失败，则在指定的时间内重试，默认的时限为 500 毫秒
-
-   - WeightedResponseTimeRule
-
-     权重响应时间策略，根据每个 provider 的平均响应时间计算其权重，响应时间越快权重越大，被选中的几率越高
-
-5. 自定义负载均衡策略
-
-   - 使用已有的算法
-
-     在 codeconfig 类中加上如下的方法
-
-     ```java
-      // 设置负载均衡算法为 “随机算法”
-      @Bean
-      public IRule loadBalanceRule(){
-      	return new RandomRule();
-      }
-     ```
-
-   - 自定义负载均衡算法
-
-     从 所有 provider 中排除指定端口的 provider, 在剩余的 provider 中进行随机选择
-
-     - 实现负载均衡算法
-
-       ```java
-       public class CustomRule implements IRule {
-           private ILoadBalancer lb;
-           private List<Integer> excludePorts;
-       
-           public CustomRule() {
-           }
-       
-           public CustomRule(List<Integer> excludePorts) {
-               this.excludePorts = excludePorts;
-           }
-       
-           @Override
-           public Server choose(Object key) {
-               // 所有的 server
-               List<Server> servers = lb.getReachableServers();
-       
-               // 获取所有排除指定端口的 server
-               List<Server> avibalServers = this.getAvailableServers(servers);
-       
-               // 随机选择一个 server
-               return this.getAvailableRandomServers(avibalServers);
-           }
-       
-           @Override
-           public void setLoadBalancer(ILoadBalancer lb) {
-               this.lb = lb;
-           }
-       
-           private Server getAvailableRandomServers(List<Server> availableServers) {
-               int index = new Random().nextInt(availableServers.size());
-               return availableServers.get(index);
-           }
-       
-           private List<Server> getAvailableServers(List<Server> servers) {
-               // 若不存在排除的 server，直接返回
-               if (excludePorts == null || excludePorts.size() == 0) {
-                   return servers;
-               }
-       
-               // 过滤掉不可用的 server
-               List<Server> availableServers = servers
-                       .stream()
-                       .filter(s -> !excludePorts.contains(s.getPort()))
-                       .collect(Collectors.toList());
-               return availableServers;
-           }
-       
-           @Override
-           public ILoadBalancer getLoadBalancer() {
-               return this.lb;
-           }
-       }
-       ```
-
-     - 在 codeConfig 添加 bean
-
-       ```java
-       @Bean
-       public IRule loadBalanceRule() {
-           List<Integer> ports = new ArrayList<>();
-           ports.add(8082);
-           return new CustomRule(ports);
-       }
-       ```
-
+   - 启动并访问
 
 #### Hystrix 熔断机制与服务降级
 
-先了解雪崩效应和服务雪崩
+- 雪崩效应：服务 A 依赖 服务 B 和 C，同时服务 B 和 C 又依赖别的服务.....
 
-- 雪崩效应：服务 A 依赖 服务 B 和 C，同时服务 B 和 C 又依赖别的服务....
-
-![](imgs/46.png)
-
-
-
-![](imgs/47.png)
-
-​					最终导致所有生产陷入瘫痪，这就是雪崩效应
+  如果链路上的某个子服务的延迟较高，则会导致前面的服务请求等待被阻塞，占用系统的资源，当请求数量越来越多，会导致系统的瓶颈出现，最终导致系统瘫痪，这就是雪崩效应
 
 - 雪崩效应发生在 SOA 服务系统中，称为服务雪崩
 
-  ![](imgs/48.png)
-
 - 熔断机制
 
-  ![](imgs/49.png)
+  熔断机制是服务雪崩的一种有效的解决方案。当服务消费者所请求的提供者暂时不能提供服务时，消费者会被阻塞，且长时间占用请求链路，为了防止这种情况发生，当在设定阈值时间到达，仍未获得提供者的服务，则系统将通过熔断机制将请求断开。这用像熔断 ”保险丝“ 一样的解决方案称为熔断机制。
 
 - Hystrix 
 
-  ![](imgs/50.png)
-
-  ​						可处理的备选响应，就避免了服务雪崩。
+  在一个分布式系统里，许多服务不可避免的会出现调用失败的情况，比如超时，异常等。如何能保证在一个服务出问题的情况下，不会导致整个系统的瘫痪。这个就是 Hystrix 需要做的事情。Hytrix 提供了熔断、隔离、Fallback、cache、监控等功能，能够在一个或多个服务同时出现问题时保证系统依然可用，Hytrix 是种开关装置，类似于熔断保险丝，当 Hytrix 监控到某个服务发生故障后，其不会让该服务阻塞或向后抛出异常，而是返回一个符合预期的、可处理的备选响应，就避免了雪崩。
 
 - 服务降级
 
+  当服务提供者无法提供服务时（响应超时或提供者关闭服务），为了增加用户体验，保证整个系统能正常运行，由消费则端调用本地操作，暂时给用户响应结果情况。
+
   提供者端的服务熔断，消费者端的本地服务，共同构成服务降级（降级指的是，本应该由提供者提供，但由消费者提供默认数据了）
 
-  ![](imgs/51.png)
+  例如：淘宝在双 11 关闭修改收件地址的功能
 
-- Hystrix服务降级代码（ 方法级别）
+- Hystrix服务降级代码（方法级别）
 
-  > Hystrix 和提供者没有关系只在消费者端添加
+  > Hystrix 和提供者没有关系只在消费者端添加，且和 OpenFeign 没有关系
   >
-  > Hystrix 和 Feign 是没有任何关系的
 
   1. 添加 hystrix 依赖
 
@@ -776,23 +788,35 @@
 
 - 网关服务 Zuul
 
-  Zuul 里边有负载均衡
+  Zuul 主要提供了对请求的路由与过滤功能
 
-  ![](imgs/52.png)
+  路由功能：外部请求都转发到具体的为服务器实例上，是外部访问微服务的**统一入口**
 
-  ​	![](imgs/53.png)
+  过滤功能：对请求的处理过程进行干预，对请求进行校验、服务聚合等处理
 
+  
+
+  Zull  与 Eureka Server 进行整合，将 Zull 自身注册为 Eureka 服务治理下的应用（client），从 Eureka Server 中获取到其他微服务信息，使外部对于微服务的访问都是通过 Zuul 进行**转发**的
+  
+  
+  
+  用户访问 Zuul 带上微服务名称和 URI，Zuul 因为是 Eureka Server 下的一个客户端，具有其他微服务的相关配置信息，根据微服务名读取出对应的微服提供者列表，使用负载均衡算法选取其中的一个服务提供者，把路径转发给它
+  
+  结构图：
+  
+  ![](imgs/53.png)
+  
   1. 添加 eureka 和 zuul 依赖
-
+  
      ```xml
      <dependency>
      	<groupId>org.springframework.cloud</groupId>
      	<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
-     </dependency>
+   </dependency>
      
-     <dependency>
+   <dependency>
      	<groupId>org.springframework.cloud</groupId>
-     	<artifactId>spring-cloud-starter-netflix-zuul</artifactId>
+   	<artifactId>spring-cloud-starter-netflix-zuul</artifactId>
      </dependency>
      
      <dependency>
@@ -800,15 +824,15 @@
      	<artifactId>spring-boot-starter-actuator</artifactId>
      </dependency>
      ```
-
+  
   2. 修改主配置文件
-
-     > 注册为 eureka 服务客户端，并指定微服务名称
-
+  
+     > 注册为 eureka 客户端，并指定微服务名称
+  
      ```yml
-     server:
+   server:
        port: 9000
-     
+   
      eureka:
        client:
          service-url:
@@ -818,18 +842,18 @@
        application:
          name: kkbmsc-zuul-depart
      ```
-
-  3. 在主类上添加 `@EnableZuulProxy` 注解
-
-     ```java
+  
+3. 在主类上添加 `@EnableZuulProxy` 注解
+  
+   ```java
      @SpringBootApplication
-     @EnableZuulProxy // 开启 Zuul 代理模式
+   @EnableZuulProxy // 开启 Zuul 代理模式
      public class ZuulApplication {
-     
+   
          public static void main(String[] args) {
-             SpringApplication.run(ZuulApplication.class, args);
+           SpringApplication.run(ZuulApplication.class, args);
          }
-     }
+   }
      ```
 
   4. 启动 eureka 服务端，消费端，服务端 和 zuul，查看到已经启动的微服务
@@ -841,26 +865,26 @@
      原始方式：
 
      <http://localhost:8080/consumer/depart/get/1>
-
-     zuul 方式（zuul 地址 + consumer 微服务名称 + 数据访问地址）：
-
-     <http://localhost:9000/kkbmsc-consumer-depart/consumer/depart/get/1>
-
+  
+     zuul 方式（zuul 地址 + consumer 微服务名称 + 数据访问地址（uri））：
+  
+     http://localhost:9000/kkbmsc-consumer-depart/consumer/depart/get/1
+  
      但是这样暴露了微服务名称，对系统来说不安全
-
+  
      解决办法：对微服务进行映射
-
+  
      在主配置文件中添加：
-
+  
      ```yml
      # 设置 zuul 路由规则
      zuul:
        # 设定微服务名称的替换规则
        routes:
          # 指定替换的微服务名称，someDepart 可以任意指定，后面的不能任意指定
-         someDepart.serviceId: kkbmsc-consumer-depart
+       someDepart.serviceId: kkbmsc-consumer-depart
          # 指定替换的路径
-         someDepart.path: /condep/**
+       someDepart.path: /condep/**
        
        # 忽略指定的微服务，这样就只能使用替换后的路径，不能使用之前的微服务名称访问了
        # 忽略所有使用 “*” 代替
@@ -870,9 +894,9 @@
        # 为映射路径统一添加前缀
        prefix: /depart
      ```
-
+  
      启动再次访问：
-
+  
      <http://localhost:9000/depart/condep/consumer/depart/get/1>
 
 ####  Spring Cloud Config 分布式配置中心

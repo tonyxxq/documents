@@ -242,5 +242,111 @@
 
 ```
 
+### 逆向工程
 
+> 数据库创建好表之后，使用mybatis 提供的 逆向工程可以创建出 mapper、 接口、和实体类
+
+github 地址：https://github.com/mybatis/generator/releases/tag/mybatis-generator-1.3.7、
+
+下载之后修改配置文件
+
+> 注意：需要把生成的实体类、接口、mapper的位置设置成和正式的路径一致
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration
+  PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+  "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+
+<generatorConfiguration>
+	<context id="testTables" targetRuntime="MyBatis3">
+		<commentGenerator>
+			<!-- 是否去除自动生成的注释 true：是 ： false:否 -->
+			<property name="suppressAllComments" value="true" />
+		</commentGenerator>
+
+		<!--数据库连接的信息：驱动类、连接地址、用户名、密码 -->
+		<jdbcConnection driverClass="com.mysql.jdbc.Driver"
+						connectionURL="jdbc:mysql:///kaikeba"
+						userId="root"
+						password="123456">
+		</jdbcConnection>
+
+		<!-- <jdbcConnection driverClass="oracle.jdbc.OracleDriver" connectionURL="jdbc:oracle:thin:@127.0.0.1:1521:yycg"
+			userId="yycg" password="yycg"> </jdbcConnection> -->
+
+		<!-- 默认false，把JDBC DECIMAL 和 NUMERIC 类型解析为 Integer，为 true时把JDBC DECIMAL 
+			和 NUMERIC 类型解析为java.math.BigDecimal -->
+		<javaTypeResolver>
+			<property name="forceBigDecimals" value="false" />
+		</javaTypeResolver>
+
+		<!-- targetProject:生成 PO 类的位置 -->
+		<javaModelGenerator targetPackage="com.kkb.eureka.eurekaprovider.bean" targetProject=".\src">
+			<!-- enableSubPackages:是否让schema作为包的后缀 -->
+			<property name="enableSubPackages" value="false" />
+			<!-- 从数据库返回的值被清理前后的空格 -->
+			<property name="trimStrings" value="true" />
+		</javaModelGenerator>
+
+		<!-- targetProject:mapper映射文件生成的位置 -->
+		<sqlMapGenerator targetPackage="mapper" targetProject=".\src">
+			<!-- enableSubPackages:是否让schema作为包的后缀 -->
+			<property name="enableSubPackages" value="false"/>
+		</sqlMapGenerator>
+
+		<!-- targetPackage：mapper接口生成的位置 -->
+		<javaClientGenerator type="XMLMAPPER" targetPackage="com.kkb.eureka.eurekaprovider.mapper" targetProject=".\src">
+			<!-- enableSubPackages:是否让schema作为包的后缀 -->
+			<property name="enableSubPackages" value="false" />
+		</javaClientGenerator>
+
+		<!-- 指定数据库表， -->
+		<table tableName="dept"></table>
+		<table tableName="employee"></table>
+		<!--<table tableName="user"></table>-->
+	</context>
+</generatorConfiguration>
+```
+
+生成
+
+```java
+public class Generator {
+    public static void main(String[] args) throws Exception {
+        List<String> warnings = new ArrayList<String>();
+        boolean overwrite = true;
+        File configFile = new File("mybatis-generator/config/generatorConfig.xml");
+        ConfigurationParser cp = new ConfigurationParser(warnings);
+        Configuration config = cp.parseConfiguration(configFile);
+        DefaultShellCallback callback = new DefaultShellCallback(overwrite);
+        MyBatisGenerator myBatisGenerator = new MyBatisGenerator(config, callback, warnings);
+        myBatisGenerator.generate(null);
+    }
+}
+```
+
+生成之后会产生结果，放到正式的项目下
+
+![](imgs/270.png)
+
+调用口，只能进行单表操作，且生成的 mapper 文件，parameterType 属性设置的是是全限定名，如果设置了  typeAlias 需要手动修改一下 
+
+```java
+@RunWith(SpringRunner.class)
+@SpringBootTest
+public class EurekaProvider01Tests {
+
+    @Autowired
+    DeptMapper deptMapper;
+
+    @Test
+    public void contextLoads() {
+        DeptExample dept = new DeptExample();
+        dept.createCriteria().andDnameEqualTo("金融事业部");
+        List<Dept> deptList = deptMapper.selectByExample(dept);
+        System.out.println(deptList);
+    }
+}
+```
 

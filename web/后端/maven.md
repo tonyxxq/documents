@@ -3,9 +3,39 @@
 #### Maven 依赖常见的范围（sope）
 
 - compile：编译依赖，**默认的依赖方式**，在编译（编译项目和编译测试用例），运行测试用例，运行（项目实际运行）三个阶段都有效，典型地有 spring-core 等 jar
+
 - test: 测试依赖，只在编译测试用例和运行测试用例有效，典型地有 JUnit
+
 - provided: 对于编译和测试有效，不会打包进发布包中，典型的例子为servlet-api, 一般的 web 工程运行时都使用容器的 servlet-api
+
 - runtime: 编译时不需要，在运行测试用例和实际运行时有效。这种主要是指代码里并没有直接引用而是根据配置文件在运行时动态加载并实例化的情况。例如：DBCP 连接池
+
+- import：它只能使用在 dependencyManagement 中，表示从其它的 pom 配置，因为 maven 是单继承的方式（一个 pom 只能写一个 parent 标签），如果想多继承，可以使用该方式，再选择性继承
+
+  例如：
+
+  ```xml
+  <dependencies>
+      <!--选择性继承-->
+      <dependency>
+          <groupId>org.springframework.cloud</groupId>
+          <artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
+      </dependency>
+  </dependencies>
+  
+  <dependencyManagement>
+      <dependencies>
+          <!-- <scope>import</scope>解决单继承问题，类似 parent 标签， -->
+          <dependency>
+              <groupId>org.springframework.cloud</groupId>
+              <artifactId>spring-cloud-dependencies</artifactId>
+              <version>Greenwich.RELEASE</version>
+              <type>pom</type>
+              <scope>import</scope>
+          </dependency>
+      </dependencies>
+  </dependencyManagement>
+  ```
 
 #### maven 的生命周期
 

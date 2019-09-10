@@ -55,7 +55,6 @@
    scanPeriod: 当 scan 为 true 时，此属性生效，默认的时间间隔为1分钟
    debug: 当此属性设置为true时，将打印出logback内部日志信息，实时查看logback运行状态。默认值为false
    -->
-   <?xml version="1.0" encoding="UTF-8"?>
    <configuration scan="true" scanPeriod="60 seconds" debug="false">
        <!--定义常量，后面可以使用 ${} 直接引用-->
        <!--定义日志文件的存储地址 勿在 LogBack 的配置中使用相对路径-->
@@ -155,7 +154,7 @@
        <!--</logger>-->
    </configuration>
    ```
-
+   
 3. 添加测试代码
 
    ```java

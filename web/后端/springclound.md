@@ -4,6 +4,8 @@
 
 1. 微服务与微服务架构
 
+   例如：前公司 E 平台子系统提供的就是微服务，整个架构就属于微服务架构，但是之前没有提供服务注册中心的功能
+
 2. Spring Clound 简介
 
 3. 在线资源
@@ -14,25 +16,24 @@
 
 4. Dubble 和 Spring Clound 技术选型
 
-![](imgs/38.png)
+   - Dubble 架构的完整度不够，本身仅仅提供了服务注册中心与服务治理两个模块。而 SpringCloud 已经提供了服务治理、服务注册中心等24个模块，并且还在不断增加中
+   - 相比 SpringCloud， Dubble 的社区活跃度不够，遇见问题不好解决
+   - Dubble 通讯采用的是 PRC（需要依赖于业务接口），而 Spring Cloud 采用的是 HTTP 的 REST，不存在代码的强依赖
+   - Dubble 的优点是因为是国内人员开发的提供了比较高质量的官方文档
 
-​							要考虑的
-
-​	总结：对于小型业务可选择使用 Dubbo， 总体上 Spring Cloud 要比 Dubbo 更好。
+   **总结：目前来说对于小型业务可选择使用 Dubbo， 总体上 Spring Cloud 要比 Dubbo 更好**
 
 5. 实现一个简单的 provider 和 consumer（restful 格式)
 
-   - provider 实现简单的对数据库的增、删、改、查接口
+   - provider 实现简单的对数据库的增、删、改、查接口，并暴露 REST 的外界访问
 
    - consumer
 
-     添加 RestTemplate bean
+     > 使用添加 RestTemplate 进行数据访问
 
      ```java
      @Configuration
      public class DepartCodeConfig {
-     
-         // 好比是 Spring 容器中的 bean， name 为方法名
      
          @Bean
          @LoadBalanced //  开启消费端的负载均衡，默认使用轮询
@@ -41,8 +42,10 @@
          }
      }
      ```
-
-     handler 注入 RestTemplate， 调用 provider 接口
+     
+     > handler 注入 RestTemplate， 调用 provider 接口
+   >
+     > 可以看到 RestTemplate 有局限，返回值可能不是我们想要的结果，比如 delete 和 put 返回都是 void
 
      ```java
      @RestController
@@ -86,40 +89,45 @@
      }
      ```
 
-     
 
  #### 微服务中心 Eureka
 
-> 如果使用如上的简单示例，当 provider 只有一台的时候，如果出现宕机，则别人就不能访问，所以把服务做成机群，使用 Eureka 做为服务注册中心。
+> 如果使用如上的简单示例，当 provider 只有一台的时候，如果出现宕机，则别人就不能访问，所以把服务做成机群，使用 Eureka 做为服务注册中心
 
 1. 概述
 
-![](imgs/39.png)
+   Eureka 包含两个组件：Eureka Server 和 Eureka Client，
 
-github地址： https://github.com/Netflix/eureka
+   ​		 Eureka Server 提供服务注册功能。提供者节点启动后，会在 Eureka Server  中进行注册，这样 Eureka Server 的服务注册表中将会存储所有可用服务节点的信息。然后各提供者回会向 Eureka Server 发送心跳，以告知自己的健康状态，默认周期是 30 秒。如果多个周期内（默认 3 个周期，90 秒）没有接收到某个提供者的心跳，Eureka Server 将会认为其无法提供服务，会将该服务提供者节点从服务注册表中移除。Eureka Server 之间通过复制的方式完成数据同步。
 
-附录：
+   ​		 Eureka Client 是一个 java 客户端，用于简化消费者与 Eureka Server 的交互。同时，Eureka Client 还内置了负载均衡器，为消费者从 Eureka Server 的服务注册表选择合适的提供者。Eureka Client 会缓存 Eureka Server 中的信息，即使所有的 Eureka Server 都挂掉，客户端依然可以进行访问，只是不能再进行服务注册。体现了 AP 原则。
 
-​	死锁：两个进程之间都有对象需要的资源，都不放手，
+   ​		总之，Eureka 通过心跳检查，客户端缓存、负载均衡等机制，确保了系统的高可用性、灵活性和可伸缩性
 
-​	活锁： 一个进程需要别的进程释放资源i
+   
 
-![](imgs/40.png)
+   Spring Cloud 已经把 Eureka 集成在其子项目 Spring Cloud Netflix 里面
+
+   github地址： https://github.com/Netflix/eureka
+
+   架构图：
+   ![](imgs/40.png)
 
 ​		**注意： 不管是 Application Server 还是 Application  Client 都是使用的 Eureka Client**
 
 2. 创建 Eureka 服务中心
 
-   分为三步
+   - 创建 Spring Boot 工程（Spring Cloud 依赖 Spring Boot），选择 EurekaServer 依赖
 
-   - 创建 Spring Boot 工程，选择导入 EurekaServer 依赖
-
-     >  注意： 除了 EurekaServer 依赖之外，若 JDK 大于 8，还需导入 jaxb 依赖
-
-     ![](imgs/41.png)
+     >  **注意： 除了 EurekaServer 依赖之外，若 JDK 大于 8，还需导入 JAXB 依赖**
+     >
+     >  因为在 JDK9 之前 JAXB API 包含在 JDK 中， JDK9 之后被踢出掉，所以 JDK9 及其以上版本需要加入 JAXB 依赖
+     >
+     >  JAXB 是一项可以根据 XML Schema 产生 java 类的技术
 
      ```xml
      <dependencies>
+         <!--eureka-server 依赖-->
          <dependency>
              <groupId>org.springframework.cloud</groupId>
              <artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
@@ -188,20 +196,23 @@ github地址： https://github.com/Netflix/eureka
            defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka
      ```
 
-     启动访问：<http://localhost:8000/>
+   - 在启动类中添加  `@EnableEurekaServer` 注解
 
-   - 在启动类中添加注解，开启 EurekaServer
 
-     ```java
-     @SpringBootApplication
-     @EnableEurekaServer
-     public class EurekaServerApplication {
-     
-         public static void main(String[] args) {
-             SpringApplication.run(EurekaServerApplication.class, args);
-         }
-     
-     }
+   - 启动并访问：http://localhost:8000/
+
+     ![](imgs/269.png)
+
+   - Eureka Server 的 self Perservation 机制（自我保护机制）
+
+     在短时间内若 EurekaServer 丢失较多微服务（收到的心跳数量小于阈值），会开启自我保护模式，微服务列表只能读取和写入，不能执行删除操作，当心跳数量到达阈值数量以上时间，会自动退出自我保护模式。
+
+     也可以如下设置关闭自我保护模式（不建议）
+
+     ```yaml
+     eureka:
+       server:
+         enable-self-preservation: false
      ```
 
 3. 创建提供者
@@ -214,22 +225,10 @@ github地址： https://github.com/Netflix/eureka
      	<groupId>org.springframework.cloud</groupId>
      	<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
      </dependency>
+     
+   mysql 等依赖省略......
      ```
-
-     ```xml
-     <dependencyManagement>
-             <dependencies>
-                 <dependency>
-                     <groupId>org.springframework.cloud</groupId>
-                     <artifactId>spring-cloud-dependencies</artifactId>
-                     <version>Finchley.SR1</version>
-                     <type>pom</type>
-                     <scope>import</scope>
-                 </dependency>
-             </dependencies>
-         </dependencyManagement>
-     ```
-
+     
    - 在配置文件中执行要注册的 Eureka 注册中心
 
      ```yml
@@ -276,53 +275,27 @@ github地址： https://github.com/Netflix/eureka
 
    - 在启动类上添加 `@EnableEurekaClient` 注解
 
-   - 启动访问：<http://localhost:8000/，可以看到在注册中心注册的微服务提供者信息
+   - 启动访问：http://localhost:8000
 
-     点击微服务提供者打不开，使用 actuator 完善微服务 info
+     可以看到在注册中心注册的微服务提供者信息
 
-     为提供者添加依赖：
+     ![](imgs/271.png)
 
-     ```xml
-     <!--actuator 依赖-->
-     <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-actuator</artifactId>
-     </dependency>
-     ```
+     当点击微服务名称，出现错误页面，因为没有启用 acturator，默认会使用 acturator/info 接口下的数据
 
-     修改主配置文件,添加如下内容（info 内部的内容可以自定义）：
-
-     ```yml
-     info:
-       company.name: www.bkaikeba.com
-       address: 北京
-       company.tel: 1234567
-       app.name: kaikeba-msc
-       app.desc: mic-service-cloud
-       author: kaikeba
-     ```
-
-     在页面上再次点击微服务的名称可以看到如下：
-
-     ```
-     {"company":{"name":"www.bkaikeba.com","tel":1234567},"address":"北京","app":{"name":"kaikeba-msc","desc":"mic-service-cloud"},"author":"kaikeba"}
-     ```
-
-6. Eureka 的 self Perservation 机制
-
-   ![](imgs/43.png)
-
-   可以设置关闭自我保护模式（不建议）
-
-   ```yml
-   eureka:
-     server:
-       enable-self-preservation: false
-   ```
-
-7. 创建消费者
+4. 创建消费者
 
    - 添加 Eureka 客户端依赖
+
+     ```xml
+     <!--添加 eureka 客户端依赖-->
+     <dependency>
+     	<groupId>org.springframework.cloud</groupId>
+     	<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+     </dependency>
+     
+     ......
+     ```
 
    - 配置文件中指定 Eureka 注册中心
 
@@ -336,16 +309,13 @@ github地址： https://github.com/Netflix/eureka
        client:
          service-url:
            defaultZone: http://localhost:8000/eureka
-     
      ```
-
-   - 在 CodeConfig 类中添加 ResTemplate 添加 `@LoadBalanced` 注解
+     
+   - 装配 ResTemplate 实例对象
 
      ```java
      @Configuration
      public class DepartCodeConfig {
-     
-         // 好比是 Spring 容器中的 bean， name 为方法名
      
          @Bean
          @LoadBalanced //  开启消费端的负载均衡，默认使用轮询
@@ -353,12 +323,13 @@ github地址： https://github.com/Netflix/eureka
              return new RestTemplate();
          }
      }
-     
      ```
-
+     
    - 在启动类上添加 `@EnableEurekaClient` 注解
 
-8. 服务发现
+   - 调用 provider
+
+5. 服务发现
 
    - 入口类添加注解 `@EnableDiscoveryClient` ，开启服务发现
 
@@ -384,19 +355,19 @@ github地址： https://github.com/Netflix/eureka
      }
      ```
 
-9. Eureka 集群
+6. Eureka 集群
 
-   在**Eureka 的每个服务端和客户端**的主配置文件上修改defaultZone为多个：
+   在** Eureka 的每个服务端和客户端**的主配置文件上修改 defaultZone 为多个：
 
    ```yml
    defaultZone: http://eureka1.com:8100/eureka,http://eureka2.com:8200/eureka,http://eureka3.com:8300/eureka
    ```
 
-10. Eureka 与 ZooKeeper 对比
+7. Eureka 与 ZooKeeper 对比
 
-    Eureka: AP 原则，保证可靠性，丢掉了一致性
+   Eureka: AP 原则，保证可靠性，丢掉了一致性
 
-    zooKeeper：CP 原则，保证一致性，丢掉了可靠性
+   zooKeeper：CP 原则，保证一致性，丢掉了可靠性
 
 #### 声明式 REST 客户端 OpenFeign
 

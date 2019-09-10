@@ -6,9 +6,7 @@
 
 Spring Boot 中 pom 依赖是选择性继承，可以从父文件查看版本，如果没有必要可以不用设置版本
 
-![](imgs/6.png)
-
-注意：创建的 jar 包内置了 tomcat,  但是创建的 war 包项目没有，需要在指定的 tomcat 下运行
+注意：创建的 jar 包内置了 tomcat 可以在命令行直接使用 java -jar  xxx.jar 的方式运行 ,  但是创建的 war 包项目没有，需要在指定的 tomcat 下运行
 
 > war 项目多了下面的配置， score 为 provided 表示在测试和开发环境中需要
 
@@ -18,15 +16,37 @@ Spring Boot 中 pom 依赖是选择性继承，可以从父文件查看版本，
 
 ![](imgs/8.png)
 
-修改配置文件
+配置依赖
+
+![](imgs/268.png)
+
+创建 controller
+
+```java
+@RestController
+@RequestMapping("some")
+public class SomeController {
+
+    @RequestMapping("hello")
+    public String someHandler() {
+        return " hello springboot";
+    }
+}
+```
+
+修改主配置文件 application.properties
 
 ```properties
-# 修改端口和 context-path
+# 修改端口（默认为 8080）
 server.port=8888
-server.servlet.context-path=/ddd
+
+# 修改 context-path（默认为 /）
+server.servlet.context-path=/kkb
 ```
 
 在 Application.java 文件中启动项目
+
+在浏览器访问
 
 **注意：所有需要被 Spring 管理的类，需要在 Application.java 文件同级的子目录下才能被扫描到**
 
@@ -50,6 +70,8 @@ server.servlet.context-path=/ddd
 ####  Acuator
 
 > 它的主要作用是用于监控与管理，对微服务的监控显得尤为重要
+>
+> 包括服务器的内存使用情况、磁盘使用情况、环境变量、 bean 创建情况、查看 `@RequestMapping`、最近的访问记录等等
 
 ```xml
 <!--Actuator 监控依赖-->
@@ -217,13 +239,14 @@ management.endpoints.web.exposure.include=*
 }
 ```
 
-自定义配置信息（可以使用如上url：  http://localhost:9999/actuator/info  进行访问）
+自定义配置信息，info 开头（可以使用如上url：  http://localhost:9999/actuator/info  进行访问）
 
 ```properties
 # 自定义 info 信息
 info.company.namn = "kaikeba"
 info.company.address = "yibin"
-info.company.url = "www.kaikeba.com"
+# @...@ 表示引用 pom 中的配置信息 
+info.company.url = @project.url@
 ```
 
 其他一些配置
@@ -294,7 +317,9 @@ management.endpoints.shutdown.sensitive=false
 
 #### 配置多环境选择
 
-> 因为在开发、测试和生产环境不一样，所以需要在不同的环境之间进行切换
+> 因为在开发、测试和生产环境中数据库配置等信息可能不一样，所以需要在不同的环境之间进行切换
+>
+> 这点在 spring boot 中使很方便的
 
 ![](imgs/3.png)
 
@@ -310,86 +335,58 @@ application-pro.properties 表示生产环境
 spring.profiles.active=dev
 ```
 
-#### 使用代码读取配置文件
+#### 代码中读取配置文件内容
 
-1. 主配置文件中定义，代码中读取
-
-   **主配置文件**定义
-
-   ```properties
-   student.name = "tony"
-   ```
-
-   代码中读取
-
-   ```java
-   @Value("${student.name}")
-   private String studentName;
-   ```
+> **主配置文件中的可以直接读取，自定义配置文件中的需要使用如下注解导入**
+>
+> `@PropertySource(value = "classpath:my.properties", encoding = "UTF-8")` 
 
 2. 自定义配置文件读取（不能使用 YAML 文件，只能使用 properties 文件）
 
-   **自定义配置文件** 
-
    ```properties
-   # 测试单个属性
-   city.name="北京"
-   
-   # 测试导入对象的时候用到
+   # 表示对象
    student.name="xxq"
    student.age=28
+   
+   # 表示对象中的 list
    student.cities[0]="beijing"
    student.cities[1]="shanghai"
    student.cities[2]="广州"
    ```
-
-   单个属性接收
-
-   ```java
-   @PropertySource(value = "classpath:my.properties", encoding = "UTF-8")
-   public class SomeController {
    
-       @Value("${city.name}")
-       private String cityName;
-       
-       ......
-   }
-   ```
-
-   使用对象接收
-
+   对象接收数据，并实例化，整个对象就是一个 bean，可以直接被注入到其他的对象中
+   
    ```java
    @Component
-   @PropertySource(value = "my.properties", encoding = "UTF-8")
-   @ConfigurationProperties("student")
+   @Data
+   @PropertySource(value = "student.properties", encoding = "UTF-8") // 自定义配置才需要
+   @ConfigurationProperties("student") // 读取配置属性并自动封装成实体类
    public class StudentDto {
        private String name;
        private Integer age;
        private List<String> cities;
+   }
+   ```
    
-       public List<String> getCities() {
-           return cities;
-       }
+   使用
    
-       public void setCities(List<String> cities) {
-           this.cities = cities;
-       }
+   ```java
+   @RestController
+   @RequestMapping("/some")
+   public class SomeController {
    
-       public void setName(String name) {
-           this.name = name;
-       }
+       // 单个属性
+       @Value("${student.name}")
+       private String studentName;
    
-       public void setAge(Integer age) {
-           this.age = age;
-       }
+       // 实体对象
+       @Autowired
+       private StudentDto studentDto;
    
-       public String getName() {
-   
-           return name;
-       }
-   
-       public Integer getAge() {
-           return age;
+       @RequestMapping("/hello")
+       public String someHandler() {
+           System.out.println(studentName);
+           return studentDto.toString();
        }
    }
    ```
@@ -421,30 +418,55 @@ spring.profiles.active=dev
 在 Spring 配置文件中需要注册三类信息
 
 ```properties
-# 映射文件
-mybatis.mapper-locations=classpath:
+# 映射文件，可以修改为指定位置，非必须和接口文件一直
+mybatis.mapper-locations=classpath:mapper/*Mapper.xml
 
 # 配置指定包类的别名
-mybatis.type-aliases-package=
+mybatis.type-aliases-package=com.kkb.spring.springboot.bean
 
 # 配置数据源
 spring.datasource.type=com.alibaba.druid.pool.DruidDataSource
 spring.datasource.driver-class-name=com.mysql.jdbc.Driver
-spring.datasource.url=jsbc:mysql://localhost:3306/kaikeba
+spring.datasource.url=jdbc:mysql:///kaikeba?useUnicode=true&characterEncoding=UTF8
 spring.datasource.username=root
 spring.datasource.password=123456
 ```
 
-使用事务
+添加 Mapper 接口
+
+```java
+// 需加上 Mapper 注解
+@Mapper
+public interface StudentMapper {
+    List<Student> listAllStudents();
+    void insertStudent(Student student);
+}
+```
+
+添加 Mapper 配置文件
+
+```xml
+<mapper namespace="com.kkb.spring.springboot.mapper.StudentMapper">
+    <select id="listAllStudents" resultType="Student">
+		SELECT * FROM student
+	</select>
+
+    <insert id="insertStudent">
+		insert into student(name, age) values (#{name}, #{age})
+	</insert>
+</mapper>
+```
+
+添加事务
 
 1. 在 Spring Boot 主类上添加 `@EnableTransactionManagement` 注解
 2. 在 Service方法 添加 `@Transactional` 注解
 
 #### 集成日志
 
-> Spring Boot 使用 logback， 作者与 log4j 出自同一人，但比 log4j 更加高级
+> Spring Boot 使用 logback
 >
-> 需要 添加 logback 依赖， 但是 spring-boot-stater-web 已间接依赖 logback， 所以不用再在 pom.xml 中添加 logback 依赖
+> 注意：spring-boot-stater-web 已间接依赖 logback， 所以不用再在 pom.xml 中添加 logback 依赖
 
 有两种使用方式：
 
@@ -452,26 +474,27 @@ spring.datasource.password=123456
 
    ```properties
    # 控制日志显示格式、默认日志显示级别、指定包的显示级别
-   logging.pattern.console=%level %msg
+   logging.pattern.console=[%thread] %level %logger %msg%n
+   logging.level.root=debug
+   logging.file=D:/logs/my.log
+   logging.pattern.file=D:/logs/my_%d{yyyy-MM-dd-HH}%i.log
+   logging.file.max-size=20MB
    
-   logging.level.root=warn
-   logging.level.com.kaikeba.dao=debug
+   # 指定具体的包下的日志记录方式
+   # logging.level.com.kaikeba.dao=info
    ```
 
 2. 在 resource 下添加 logback.xml 文件
 
-#### 集成 Redis
+   参考：[logback](logback.md)
 
->两种类型数据可以考虑进行缓存
->
->1. 数据更新从缓存中删除
->2. 数据的准确性要求不是很高，设置过期时间，到期自动删除
+#### 集成 Redis
 
 1. 在 pom 配置文件中添加 redis 相关依赖
 
    ```xml
    <!--redis 相关依赖-->
-       <dependency>
+   <dependency>
        <groupId>org.springframework.boot</groupId>
        <artifactId>spring-boot-starter-data-redis</artifactId>
    </dependency>
@@ -480,118 +503,141 @@ spring.datasource.password=123456
 2. 在主配置文件添加连接信息
 
    ```properties
+   # 指定缓存类型
+   spring.cache.type=redis
+   
    # 连接 redis 单机
    spring.redis.host=127.0.0.1
    spring.redis.port=6379
    # spring.redis.password=123456
    
-   # 指定缓存类型
-   spring.cache.type=redis
-   
-   # 设置缓存名称
-   spring.cache.cache-names=realTimeCache
-   
-   # 连接 redis 集群
+   # 连接 redis 集群（哨兵）
    #spring.redis.sentinel.master=mymaster
    #spring.redis.sentinel.nodes=sentinel:26379,sentine2:26379,sentine3:26379
    ```
-
-3. 对缓存对象序列化
-
-- 使用注解方式：
-
-1. 在在主配置文件中注册缓存空间名称
-
-   ```properties
-   spring.cache.cache-names=realTimeCache
-   ```
-
-2. 在主配置类文件添加 ` @EnableCaching` 注解
-
-3. 在 service 查询方法上添加 `@Caheable` 注解，在增/删/除改方法上添加 `@CacheEvict` 注解
-
-   ```java
-   // 删除缓存
-   @CacheEvict(value = "realTimeCache", allEntries = true)
-   @Override
-   public void saveEmployee(Employee employee) {
-       employeeMapper.insertEmployee(employee);
-   }
    
-   // 查询缓存
-   @Override
-   @Cacheable(value = "realTimeCache", key = "'employee_'+#id")
-   public Employee findEmployeeById(Integer id) {
-       return employeeMapper.selectEmployeeById(id);
-   }
-   ```
+3. **对缓存对象序列化**
 
-- 使用 API 的方式需要的步骤：
+4. 访问 redis 两种方式
 
-1. Service  注入 RedisTemplate，其泛型类型 key 与 value 要求类型相同，要么都是 String，要么都是 Object（使用 Object 的通用性更好，建议使用）
+   - 使用注解方式：
+
+     1. 在在主配置文件中注册缓存空间名称
+
+        ```properties
+        spring.cache.cache-names=realTimeCache
+        ```
+
+     2. 在主配置类文件添加 ` @EnableCaching` 注解
+
+     3. 在 service 查询方法上添加 `@Caheable` 注解，在增/删/除改方法上添加 `@CacheEvict` 注解
+
+        > `@Caheable`  注解可以定义在类上或方法上，参数说明：
+        >
+        > ​	value：可以理解为前缀，必须
+        >
+        > ​	key ：表示在指定 cache 的唯一表示，不填使用默认，也可以自定义，非必须（默认有规则）
+        >
+        > ​	condition：返回缓存的条件，true 缓存，false 不缓存，使用 SpEL 编写，非必须
+        >
+        > 
+        >
+        > `@CacheEvict`  注解，主要针对方法配置，能够根据一定的条件对缓存进行**清空**
+        >
+        > ​	value、key、condition 同上
+        >
+        > ​	allEntries：是否清空所有缓存内容，缺省为 false
+        > ​	beforeInvocation：是否在方法执行前清空，默认方法执行后清空
+        >
+        > 
+        >
+        > `@CachePut` 注解和 `@Caheable` 注解类似（参数一致），只是每次都会查询数据库，把结果放入缓存，而不会从缓存里边取
+
+        ```java
+        // 查询或添加缓存
+        @Cacheable(value="realTimeCache", key = "'employee_'+#id")
+        public Employee findEmployeeById(Integer id) {
+            return employeeMapper.selectEmployeeById(id);
+        }
+        
+        // 删除 realTimeCache 下的所有缓存（也可以指定 key 删除指定名称的缓存）
+        @CacheEvict(value="realTimeCache", allEntries = true)
+        public void saveEmployee(Employee employee) {
+            employeeMapper.insertEmployee(employee);
+        }
+        ```
+
+   - 使用 API 的方式需要的步骤：
+
+     1. Service  注入 RedisTemplate，其泛型类型 key 与 value 要求类型相同，要么都是 String，要么都是 Object（使用 Object 的通用性更好，建议使用）
+
+        ```java
+        @Autowired
+        public RedisTemplate<Object, Object> redisTemplate;
+        ```
+
+     2. 在 Service 的查询方法中通过 RedisTemplate 对象获取到 Redis 的操作对象，然后对 Redis 进行读写操作。
+
+        > 下面代码使用了:  双重检测同步锁，避免缓存穿透（高并发的时候大家都访问数据库）
+        >
+        > 或在 方法上添加 synchronized（效率低）
+
+        ```java
+        public Student findStudentById(Integer studentId) {
+            /**
+             * 有时候如果网站并发访问高，一个缓存如果失效，可能出现多个进程同时查询 DB
+             * 造成DB压力过大，解决该问题的办法是使用 ：双重检测同步锁
+            */
+            BoundValueOperations<Object, Object> ops = redisTemplate.boundValueOps("findStudentById");
+        
+            RedisSerializer redisSerializer = new StringRedisSerializer();
+            redisTemplate.setStringSerializer(redisSerializer);
+        
+            Object student = ops.get();
+            if (student == null) {
+                synchronized (this) {
+                    student = ops.get();
+                    System.out.println(student);
+                    if (student == null) {
+                        student = studentMapper.findStudentById(studentId);
+                        ops.set(student, 20, TimeUnit.SECONDS);
+                    }
+                }
+            }
+            return (Student) student;
+        }
+        ```
+
+5. 附： 自定义 keygenerator
+
+   添加配置类
 
    ```java
- @Autowired
-    public RedisTemplate<Object, Object> redisTemplate;
-   ```
-   
-2. 在 Service 的查询方法中通过 RedisTemplate 对象获取到 Redis 的操作对象，然后对 Redis 进行读写操作。
-
-   > 下面代码使用了: 双重检测同步锁
-
-   ```java
-   @Override
-   public Integer findEmployeeCount() {
-       /**
-       * 有时候如果网站并发访问高，一个缓存如果失效，可能出现多个进程同时查询DB，
-       * 造成DB压力过大，解决该问题的办法是使用 ：双重检测同步锁
-       */
-       BoundValueOperations<Object, Object> ops = redisTemplate.boundValueOps("count");
-       Object count = ops.get();
-       if (count == null) {
-           synchronized (this) {
-               count = ops.get();
-               if (count == null) {
-                   count = employeeMapper.selectEmployeeCount();
-                   ops.set(count, 10, TimeUnit.SECONDS);
-               }
-           }
+   @Configuration
+   public class RedisCacheConfig extends CachingConfigurerSupport {
+       @Override
+       // 使用 类名 + 函数名 + 参数 作为 key
+       public KeyGenerator keyGenerator() {
+           return (target, method, params) -> {
+               String className = target.getClass().getName();
+               String methodName = method.getName();
+               String paramName = Arrays.stream(params).reduce("_", (a1, a2) -> a1 + "_" + a2).toString();
+               return className + "_" + methodName + paramName;
+           };
        }
-       return (Integer) count;
    }
    ```
 
-   3. 附： 自定义 keygenerator
+   查询缓存的时候默认替换为自己定义的 key
 
-       添加配置类
+   ```java
+   @Cacheable(value = "realTimeCache")
+   public Employee findEmployeeById(Integer id) {
+   	return employeeMapper.selectEmployeeById(id);、
+   }
+   ```
 
-      ```java
-      @Configuration
-      public class RedisCacheConfig extends CachingConfigurerSupport {
-          @Override
-          // 使用 类名 + 函数名 + 参数 作为 key
-          public KeyGenerator keyGenerator() {
-              return (target, method, params)->{
-                  String className = target.getClass().getName();
-                  String methodName = method.getName();
-                  return className + "_" + methodName + params[0].toString();
-              };
-          }
-      }
-      ```
-
-      查询缓存的时候可以不指定参数 key 了
-
-      ```java
-      @Cacheable(value = "realTimeCache")
-      public Employee findEmployeeById(Integer id) {
-          return employeeMapper.selectEmployeeById(id);
-      }
-      ```
-
-      结果
-
-      ![](imgs/2.png)
+   ![](imgs/2.png)
 
 #### 使用拦截器
 
@@ -627,7 +673,7 @@ spring.datasource.password=123456
    ```
 
 
-#### 继承 Servlet
+#### 集成 Servlet
 
 > 两种方式：注解和配置类的方式（麻烦），下面是注解方式
 
@@ -683,8 +729,6 @@ spring.datasource.password=123456
    </resources>
    ```
 
-#### 
-
 #### Thymeleaf
 
 > Thymeleaf 是 Spring Boot 推荐使用的模板引擎
@@ -695,7 +739,7 @@ spring.datasource.password=123456
 >
 > 3. 在 controller 返回的时候不用写 thymeleaf 文件后缀名，且不用加 templates 前缀
 >
-> 4. 新建 thymeleaf  文件就是新建 html 文件，只是在 html 标签内，多加个命名空间属性xmlns:th
+> 4. 新建 thymeleaf  文件就是新建 html 文件，只是在 html 标签内，多加个命名空间属性 xmlns:th
 >
 >    ```html
 >    <html lang="en" xmlns:th="www.thymeleaf.org">
@@ -857,10 +901,6 @@ th 属性
    ```
 
    
-
-
-
-
 
 
 

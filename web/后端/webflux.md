@@ -738,18 +738,7 @@ public class CustomExceptionHandler implements WebExceptionHandler {
 }
 ```
 
-mongodb 几个命令：
 
-```
-mongo
-show dbs;
-use test;
-db;
-show tables;
-t_student;
-db.t_student.find();
-db.t_student.find({age:{$gte:21, $lt:25}}); # 大于等于 21 小于 25
-```
 
 
 

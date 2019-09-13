@@ -22,6 +22,8 @@
 
 <a href="activemq.md">activemq</a>
 
+<a href="zookeeper.md">zookeeper</a>
+
 <a href="jdk安装.md">jdk安装</a>
 
 <a href="maven.md">maven</a>

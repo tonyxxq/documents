@@ -43,7 +43,7 @@
   // every，判断数组中是否每个元素都满足条件
   person = people.every(x => {return x.age>10 && x.age < 50 });
 
-  // some，判断数组中是否至少有一个满足条件，和every相对
+  // some，判断数组中是否至少有一个满足条件，和 every 相对
   person = people.some(x => {return x.age>10 && x.age < 50 });
 
   // reduce，数组中的每个值（从左到右）开始缩减，最终为一个值。 reduce第一个参数为函数，第二个值为
@@ -161,13 +161,13 @@
   const hasAge = !!age;
   ```
 
--  使用 `$` 作为存储 jQuery 对象的变量名前缀。
+-  使用 `$` 作为存储 jQuery 对象的变量名前缀
 
   ```
   const $sidebar = $('.sidebar');
   ```
 
-- 缓存 jQuery 查询。
+- 缓存 jQuery 查询
 
   ```javascript
   function setSidebar() {
@@ -180,23 +180,132 @@
   }
   ```
 
-- Promiss，你将会得到延期或长期运行任务的未来结果。使代码异步执行。
+- Promise，你将会得到延期或长期运行任务的未来结果。使代码异步执行
 
-  ```javascript
-  function asyncFunc() {
-      return new Promise((resolve, reject) => {
-          setTimeout(() => {
-            const result = Math.random();
-            result > 0.5 ? resolve(result) : reject('Oppps....I cannot calculate')
-          }, 1)
+  原理就是回调函数
+  
+  ```js
+  runAsync1()                 // 是一个函数 Promise
+  .then(function(data){       // 是一个函数 Promise
+      console.log(data);
+      return runAsync2();
+  })
+  .then(function(data){       // 是一个函数 Promise
+    console.log(data);
+      return runAsync3();
+  })
+  .then(function(data){        // 是一个函数 Promise
+      console.log(data);
+  });
+  
+
+  function runAsync1(){
+      var p = new Promise(function(resolve, reject){
+          //做一些异步操作
+          setTimeout(function(){
+              console.log('异步任务1执行完成');
+              resolve('随便什么数据1');
+          }, 1000);
       });
+      return p;            
   }
-
-  for (let i=0; i<10; i++) {
-      asyncFunc()
-          .then(result => console.log('Result is: ' + result))
-          .catch(result => console.log('Error: ' + result))
+  function runAsync2(){
+      var p = new Promise(function(resolve, reject){
+          //做一些异步操作
+          setTimeout(function(){
+              console.log('异步任务2执行完成');
+              resolve('随便什么数据2');
+          }, 2000);
+      });
+      return p;            
+  }
+  function runAsync3(){
+      var p = new Promise(function(resolve, reject){
+          //做一些异步操作
+          setTimeout(function(){
+              console.log('异步任务3执行完成');
+              resolve('随便什么数据3');
+          }, 2000);
+      });
+      return p;            
   }
   ```
-
-  ​
+  
+  使用
+  
+  ```js
+  // resolve 表示要上一步传入的参数
+  // resolve 表示抛出的异常
+  new Promise((resolve, reject) => {
+      setTimeout(() => {
+          resolve('随便什么数据1');
+      }, 1000);
+  
+      // reject("抛出异常");
+  }).then((resolve) => {         // resolve 是上一步的返回值
+      setTimeout(() => {
+          console.log(resolve);
+      }, 1000);
+      return "随便什么数据2";
+  }).then((resolve) => {
+      	console.log(resolve);
+      	throw  "抛出一个异常"
+  	},
+      (reject) => {
+      	reject("请求超时");    // 有异常的时候可以抛出
+      }
+  ).catch((reason) => {
+      console.log(reason)
+  });
+  ```
+  
+   all ，所以异步执行完
+  
+  ```js
+  Promise
+  .all([runAsync1(), runAsync2(), runAsync3()])
+  .then(function(results){
+      console.log(results);
+  });
+  ```
+  
+  race，执行完最快的最先输出，其他的也会执行输出
+  
+  ```js
+  //请求某个图片资源
+  function requestImg(){
+      var p = new Promise(function(resolve, reject){
+          var img = new Image();
+          img.onload = function(){
+              resolve(img);
+          }
+          img.src = 'xxxxxx';
+      });
+      return p;
+  }
+  
+  //延时函数，用于给请求计时
+  function timeout(){
+      var p = new Promise(function(resolve, reject){
+          setTimeout(function(){
+              reject('图片请求超时');
+          }, 5000);
+      });
+      return p;
+  }
+  
+  Promise
+  .race([requestImg(), timeout()])
+  .then(function(results){
+      console.log(results);
+  })
+  .catch(function(reason){
+      console.log(reason);
+  });
+  ```
+  
+  
+  
+  
+  
+  

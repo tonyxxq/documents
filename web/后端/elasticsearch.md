@@ -106,8 +106,6 @@ vim /usr/local/kkb/elasticsearch-6.5.4/config/jvm.options
 
 ​						最后一个是：配置跨域访问
 
-
-
 配置每台服务器的 elasticsearch.conf
 
 ```yaml
@@ -199,7 +197,7 @@ cnpm install -g grunt-cli
 nohup grunt server &
 ```
 
-http://192.168.1.108:9200			
+http://192.168.1.108:9200
 
 ![](imgs/265.png)	     
 

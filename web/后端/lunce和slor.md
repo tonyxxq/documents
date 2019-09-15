@@ -177,8 +177,9 @@ Luke 工具
   cp  /usr/local/kkb/solr/dist/solr-dataimporthandler-7.7.2.jar .
 
   # 在 tomcat/webapp/solr/WEB-INF/ 创建 classes
+  ```
 # 复制 solr/resources 下的所有文件到 tomcat/webapp/solr/WEB-INF/classes
-  mkdir classes
+mkdir classes
 cp /usr/local/kkb/solr/server/resources/*  .
   ```
   
@@ -209,17 +210,17 @@ cp /usr/local/kkb/solr/server/resources/*  .
       <env-entry-type>java.lang.String</env-entry-type>
 </env-entry>
   ```
-  
+
   启动 tomcat
-  
+
   浏览器访问（IP 根据自己服务器地址更换）
-  
+
   http://192.168.1.105:8080/solr/index.html
+
   
-  
-  
+
   配置中文分词器 IK-analyzer
-  
+
   ```bash
   # 下载 ik-analyzer
   # 略...
@@ -230,9 +231,9 @@ cp /usr/local/kkb/solr/server/resources/*  .
   # 将 resources 目录下的其他 3 个配置文件放入 tomcat 的 webapp/WEB-INF/classes/ 目录下
   mv * /usr/local/kkb/tomcat-solr/webapps/solr/WEB-INF/classes/
   ```
-  
+
   编辑 solrcore/conf  下的的 `managed-schema`，添加`ik分词器`
-  
+
   ```xml
   <!-- ik分词器 -->
   <fieldType name="text_ik" class="solr.TextField">
@@ -246,19 +247,19 @@ cp /usr/local/kkb/solr/server/resources/*  .
     </analyzer>
   </fieldType>
   ```
-  
+
   启动 tomcat
-  
+
   访问： http://192.168.1.105:8080/solr/index.html
+
   
-  
-  
+
   ![](imgs/186.png)
+
   
-  
-  
+
   可以在 ext.dict 中添加扩展词汇
-  
+
 - 
 
 solrcore 下有个 schema.xml（重要）

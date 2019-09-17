@@ -1,44 +1,42 @@
+# ElasticSearch
 
+## ElasticSearch 概述
 
-# ES
+ElasticSearch 是一个基于 Lucene 的搜索服务器，它提供了一个分布式多用户能力的全文搜索引擎，基于 RESTful web 接口
 
-介绍
+ElasticSearch 是用 java 开发的，并作为 Apach 许可条款下的开源发布，是当前流行的企业级搜索引擎，设计用于云计算中，能够达到实时搜索，稳定、可靠、快速安装使用方便
 
-![](imgs/210.png)
+构建在全文搜索开源软件 Lucene 之上的 ElasticSearch，不仅能对海量规模的数据完成分布式索引与检索，还能提供数据聚合分析
 
-​	![](imgs/211.png)
+目前为排名第一的搜索引擎类应用
 
-![](imgs/212.png)
+优点：
 
-ES 架构
+- 速度快，近实时查询：最迟 1 秒
+- 索引和检索的数据量大：支持 TB 级数据
+- 高扩展，高可用
 
-![](imgs/214.png)
+概括：
 
-​	![](imgs/215.png)
+基于 RESTful 标准的高扩展高可用的实时数据分析的全文搜索工具
 
-![](imgs/216.png)
+跟 Solr 一样也是使用文档来存储数据
 
+### 基本概念
 
-
-
-
-![18](imgs/217.png)
-
-​	![](imgs/218.png)
+| 关系数据库      | ElasticSearch |
+| --------------- | ------------- |
+| 数据库 Database | 索引 Index    |
+| 表 Table        | 类型 Type     |
+| 数据行 Row      | 文档 Document |
+| 数据列 Column   | 字段 Field    |
+| 表结构 Schema   | 映像 Mapping  |
 
 ## 安装
 
 ![](imgs/219.png)
 
-
-
-
-
-elastic-search--ik-analyzer
-
-kibana
-
-#### 安装单机版
+### 安装单机版
 
 >  JDK 不要安装在 root 目录下，因为启动的时候不能使用 root 账号启动
 
@@ -94,17 +92,9 @@ vim /usr/local/kkb/elasticsearch-6.5.4/config/jvm.options
 
 ![](imgs/261.png)
 
-#### 集群版安装
+### 集群版安装
 
-![](imgs/226.png)
-
-​		![](imgs/227.png)
-
-![](imgs/228.png)
-
-![](imgs/229.png)
-
-​						最后一个是：配置跨域访问
+> 关于配置的详细描述：https://blog.csdn.net/sd4015700/article/details/20736177					
 
 配置每台服务器的 elasticsearch.conf
 
@@ -141,8 +131,8 @@ discovery.zen.minimum_master_nodes: 2
 http.cors.enabled: true
 http.cors.allow-origin: "*"
 
-# 
-node.max_local_storage_nodes: 2
+# 设置一台机子能运行的节点数目，一般采用默认的 1 即可，因为我们一般也只在一台机子上部署一个节点
+node.max_local_storage_nodes: 1
 ```
 
 启动服务
@@ -159,7 +149,7 @@ curl -i -XGET -H 'Content-Type: application/json' 'http://192.168.1.107:9200/_ca
 
 ![](imgs/262.png)
 
-#### 安装 head 插件
+### 安装 head 插件
 
 > 可以进行独立安装在一台服务器上或集群中一台机器上
 
@@ -199,9 +189,11 @@ nohup grunt server &
 
 http://192.168.1.108:9200
 
-![](imgs/265.png)	     
+![](imgs/265.png)
 
-​		![](imgs/236.png)
+
+
+![](imgs/236.png)
 
 ![](imgs/237.png)
 
@@ -217,7 +209,7 @@ http://192.168.1.108:9200
 
 ![](imgs/243.png)
 
-#### 安装 ik-analyzer
+### 安装 ik-analyzer
 
 > 每台机器上都需要装
 >
@@ -239,10 +231,10 @@ su esuser
 
 https://192.168.1.107:9200
 
-#### Kibana 安装
+### Kibana 安装
 
-> Kibana是一个开源的分析与可视化平台，设计出来用于和Elasticsearch一起使用的。你可以用kibana搜索、查看存放在Elasticsearch中的数据。Kibana与Elasticsearch的交互方式是各种不同的图表、表格、地图等，直观的展示数据，从而达到高级的数据分析与可视化的目的。
-> Elasticsearch、Logstash和Kibana这三个技术就是我们常说的ELK技术栈，可以说这三个技术的组合是大数据领域中一个很巧妙的设计。一种很典型的MVC思想，模型持久层，视图层和控制层。Logstash担任控制层的角色，负责搜集和过滤数据。Elasticsearch担任数据持久层的角色，负责储存数据。而我们这章的主题Kibana担任视图层角色，拥有各种维度的查询和分析，并使用图形化的界面展示存放在Elasticsearch中的数据。
+> Kibana 是一个开源的分析与可视化平台，设计出来用于和Elasticsearch一起使用的。你可以用kibana搜索、查看存放在Elasticsearch中的数据。Kibana与Elasticsearch的交互方式是各种不同的图表、表格、地图等，直观的展示数据，从而达到高级的数据分析与可视化的目的。
+> Elasticsearch、Logstash和Kibana这三个技术就是我们常说的ELK技术栈，可以说这三个技术的组合是大数据领域中一个很巧妙的设计。一种很典型的 MVC 思想，模型持久层，视图层和控制层。Logstash 担任控制层的角色，负责搜集和过滤数据。Elasticsearch 担任数据持久层的角色，负责储存数据。而我们这章的主题Kibana担任视图层角色，拥有各种维度的查询和分析，并使用图形化的界面展示存放在 Elasticsearch 中的数据
 
 ```bash
 # 下载并解压
@@ -266,15 +258,33 @@ http://192.168.1.107:5601
 
 
 
-#### Java 客户端
+### Java 客户端
 
 
 
 ​			
 
-#### ElasticSearch 原理
+## ElasticSearch 原理
 
-三种节点角色
+### 集群的节点
+
+#### 三种节点角色
+
+master 节点
+
+这个集群只会有一个 master 节点，它将负责管理集群范围内的所有变更，例如：增加、删除索引；或增加、删除节点等。而 master 节点并不需要涉及到文档级别的变更和搜索等操作，所以当集群只拥有一个 master 节点的情况下，即使流量的增加它也不会成为瓶颈。
+
+
+
+master 节点需要从众多候选 master 节点中选择一个
+
+#### master 节点的作用
+
+负责集群节点上下线，shard分片的重新分配。
+
+创建、删除索引 。
+
+
 
 ![](imgs/249.png)
 

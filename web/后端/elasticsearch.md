@@ -324,3 +324,179 @@ master 节点需要从众多候选 master 节点中选择一个
 
 ​			![](imgs/251.png)
 
+项目使用：
+
+导入依赖：
+
+```groovy
+"org.springframework.data:spring-data-elasticsearch:${versions.elasticsearch}"
+```
+
+实体类配置
+
+```java
+@Getter
+@Setter
+@Document(indexName = "question", type = "question")
+@Accessors(chain = true)
+public class Question {
+    @Id
+    @Field(store = true)
+    private Long id;  // 问题ID
+
+    @Field(type = FieldType.Integer, store = true)
+    private int type;  // 问题类型 0：投票， 1：问题
+
+    @NotBlank(message = "问题标题不能为空")
+    @Field(type = FieldType.Text, store = true, searchAnalyzer = "ik_max_word", analyzer = "ik_max_word")
+    private String title; // 问题标题
+
+    @Field(type = FieldType.Object, store = true)
+    private RichText content; // 问题内容
+
+    @Field(store = true, type = FieldType.Long)
+    private Long userId;  // 提问人 ID
+
+    @Field(store = true, type = FieldType.Text)
+    private String nickname; // 提问人昵称
+
+    @Field(store = true, type = FieldType.Boolean)
+    private boolean classic; // 是否是精选问题
+
+    @Field(store = true, type = FieldType.Boolean)
+    private boolean top; // 是否置顶
+
+    @Field(store = true, type = FieldType.Boolean)
+    private boolean answersVisible; // 是否回答问题之后回答列表才可见
+
+    @Field(store = true, type = FieldType.Long)
+    private Long clazzId; // 班级 ID
+
+    @Field(store = true, type = FieldType.Long)
+    private Long teacherId; // 老师 ID
+
+    @Field(store = true, type = FieldType.Text)
+    private String subject; // 科目名称
+
+    @Field(store = true, type = FieldType.Text)
+    private String clazzName; // 班级名称
+
+    @Field(store = true, type = FieldType.Integer)
+    private Long answerCount; // 回答人数
+
+    @Field(store = true, type = FieldType.Integer)
+    private Long zanCount; // 点赞人数
+
+    @Field(store = true, type = FieldType.Integer)
+    private Long viewCount; // 浏览人数
+
+    @Field(store = true, type = FieldType.Date)
+    private Date createdTime; // 创建时间
+
+    // 投票
+    private boolean multiSelect;   // 是否多选
+    private boolean voteAnonymous; // 是否匿名
+    private int maxChoiceCount;    // 最多选几个
+
+    // 冗余属性
+    private Long[] clazzIds;                  // 勾选的班级
+    private List<Map<String, String>> choices;// 投票选项，创建投票时使用
+    private List<QuestionChoice> choiceList;  // 投票选项，查询投票时使用
+    private boolean voted;                    // 是否已投票
+    private int myZanStatus;// 点赞状态
+    private int order;      // 排序规则
+
+    @Field(store = true, type = FieldType.Text)
+    private String avatar;                    // 头像URL
+}
+```
+
+ service
+
+```java
+@Service
+public class ElasticSearchService implements InitializingBean{
+
+    @Autowired
+    ElasticsearchTemplate elasticsearchTemplate;
+
+    /**
+     * 插入或更新问题到索引库
+     *
+     * @param id     对象 ID
+     * @param object 需要插入或更新的对象
+     * @return true：成功 false：失败
+     */
+    public boolean createOrUpdateIndex(Object object, Long id) {
+        try {
+            IndexQuery indexQuery = new IndexQueryBuilder()
+                    .withIndexName("question")
+                    .withType("question").withId(id + "")
+                    .withObject(object).build();
+            elasticsearchTemplate.index(indexQuery);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * 删除指定 ID 对象的索引
+     *
+     * @param id   对象 ID
+     * @param type 类型
+     * @return true：成功 false：失败
+     */
+    public <T> boolean deleteById(String id, Class<T> type) {
+        try {
+            elasticsearchTemplate.delete(type, id);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * 根据条件查询问题列表
+     *
+     * @param question 问题对象
+     * @return 问题列表
+     */
+    public List<Question> findQuestions(Question question, int pageNumber, int pageSize) {
+        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+        if (question.getClazzId() != null) {
+            boolQueryBuilder.must(QueryBuilders.termQuery("clazzId", question.getClazzId()));
+        }
+        if (question.getTeacherId() != null) {
+            boolQueryBuilder.must(QueryBuilders.termQuery("teacherId", question.getTeacherId()));
+        }
+        if (question.isClassic()) {
+            boolQueryBuilder.must(QueryBuilders.termQuery("classic", question.isClassic()));
+        }
+        if (question.getUserId() != null) {
+            boolQueryBuilder.must(QueryBuilders.termQuery("userId", question.getUserId()));
+        }
+        if (question.getAnswerCount() != null) {
+            boolQueryBuilder.must(QueryBuilders.termQuery("answerCount", question.getAnswerCount()));
+        }
+        boolQueryBuilder.must(QueryBuilders.multiMatchQuery(question.getTitle(), "title", "content.html"));
+
+        SearchQuery searchQuery = new NativeSearchQueryBuilder()
+                .withTypes("question")
+                .withQuery(boolQueryBuilder)
+                .withPageable(PageRequest.of(pageNumber, pageSize))
+                .build();
+
+        return elasticsearchTemplate.queryForList(searchQuery, Question.class);
+    }
+
+   @Override
+    public void afterPropertiesSet() throws Exception {
+       if (!elasticsearchTemplate.indexExists(Question.class)) {
+           elasticsearchTemplate.createIndex(Question.class);
+       }
+       elasticsearchTemplate.putMapping(Question.class);
+    }
+}
+```
+

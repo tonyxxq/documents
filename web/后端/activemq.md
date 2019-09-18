@@ -277,11 +277,11 @@ DUPS_OK_ACKNOWLEDGE：当接收消息数量到达一定阈值之后，通过一�
 
   1. Producer 的个数有限，但是 Consumer 的消费能力，Producer 忙不过来
 2. Producer 的生产特别快，但是 Consumer 消费能力低，Producer 会被挤爆
-  
 
-  
+
+
 **提高效率的办法有以下几种**
-  
+
 1. 消息持久化/非持久化权衡
   
    对于数据可靠性要低的数据可以进行非持久 化（因为非持久化会进行 IO ，降低效率）

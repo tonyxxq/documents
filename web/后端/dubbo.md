@@ -6,7 +6,7 @@
 
 1. 水平应用架构
 
-   当网站流量很小时，只需一个应用，将所有的功能都部署在一起，以减少节点和成本，当流量增加时通过搭建集群增肌主机的水平扩展方式就可以提升整个系统的性能。此时，用于简化增删改查工作量的数据访问框架是关键。
+   当网站流量很小时，只需一个应用，将所有的功能都部署在一起，以减少节点和成本，当流量增加时通过搭建集群增加主机的水平扩展方式就可以提升整个系统的性能。此时，用于简化增删改查工作量的数据访问框架是关键。
 
 2. 垂直应用架构
 
@@ -357,7 +357,7 @@ provider
 <dubbo:registry id="bjCenter" address="zookeeper://bjzk:2181"/>
 <dubbo:registry id="shCenter" address="zookeeper://shzk:2181"/>
 
-<!--分别从两个中心取出 实现类-->
+<!--分别从两个中心取出实现类-->
 <dubbo:reference id="someService1"
                  interface="com.kaikeba.service.SomeService"
                   registry="bjCenter"/>

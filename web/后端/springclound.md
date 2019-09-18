@@ -32,10 +32,10 @@
    - consumer
 
      > 使用添加 RestTemplate 进行数据访问
->
+     >
      > RestTemplate  属于在 `spring-web` 包下，`spring-boot-starter-web` 依赖 `spring-web` 所以不用再导入依赖
      
-     ```java
+      ```java
      @Configuration
      public class DepartCodeConfig {
      
@@ -44,11 +44,11 @@
              return new RestTemplate();
          }
      }
-     ```
+      ```
      
      > handler 注入 RestTemplate， 调用 provider 接口
      >
-  > 可以看到 RestTemplate 有局限，返回值可能不是我们想要的结果，比如 delete 和 put 返回都是 void
+     > 可以看到 RestTemplate 有局限，返回值可能不是我们想要的结果，比如 delete 和 put 返回都是 void
      
      ```java
      @RestController
@@ -99,9 +99,9 @@
 
 1. 概述
 
-   Eureka 包含两个组件：Eureka Server 和 Eureka Client，
+   Eureka 包含两个组件：Eureka Server 和 Eureka Client
 
-   ​		 Eureka Server 提供服务注册功能。提供者节点启动后，会在 Eureka Server  中进行注册，这样 Eureka Server 的服务注册表中将会存储所有可用服务节点的信息。然后各提供者回会向 Eureka Server 发送心跳，以告知自己的健康状态，默认周期是 30 秒。如果多个周期内（默认 3 个周期，90 秒）没有接收到某个提供者的心跳，Eureka Server 将会认为其无法提供服务，会将该服务提供者节点从服务注册表中移除。Eureka Server 之间通过复制的方式完成数据同步。
+   ​		 Eureka Server 提供服务注册功能。提供者节点启动后，会在 Eureka Server 中进行注册，这样 Eureka Server 的服务注册表中将会存储所有可用服务节点的信息。然后各提供者会向 Eureka Server 发送心跳，以告知自己的健康状态，默认周期是 30 秒。如果多个周期内（默认 3 个周期，90 秒）没有接收到某个提供者的心跳，Eureka Server 将会认为其无法提供服务，会将该服务提供者节点从服务注册表中移除。Eureka Server 之间通过复制的方式完成数据同步。
 
    ​		 Eureka Client 是一个 java 客户端，用于简化消费者与 Eureka Server 的交互。同时，Eureka Client 还内置了负载均衡器，为消费者从 Eureka Server 的服务注册表选择合适的提供者。Eureka Client 会缓存 Eureka Server 中的信息，即使所有的 Eureka Server 都挂掉，客户端依然可以进行访问，只是不能再进行服务注册。体现了 AP 原则。
 
@@ -244,7 +244,6 @@
        application:
           name: kkbmsc-provider-depart
      
-     
      eureka:
        client:
          service-url:
@@ -253,32 +252,32 @@
        	prefer-ip-address: true
      	hostname: localhost
      ```
-
-   - 在启动类上添加 `@EnableEurekaClient` 注解
-
-   - 启动访问：http://localhost:8000
-
-     可以看到在注册中心注册的微服务提供者信息
-
-     ![](imgs/271.png)
-
-     当点击微服务名称，出现错误页面，因为没有启用 acturator，默认会使用 acturator/info 接口下的数据
-
-   - 调用微服务（使用 RestTemplate 或 后面介绍的 OpenFeign）
-
-     > 下面使用的是 RestTemplate ，
+     
+- 在启动类上添加 `@EnableEurekaClient` 注解
+   
+- 启动访问：http://localhost:8000
+   
+  可以看到在注册中心注册的微服务提供者信息
+   
+  ![](imgs/271.png)
+   
+  当点击微服务名称，出现错误页面，因为没有启用 acturator，默认会使用 acturator/info 接口下的数据
+   
+- 调用微服务（使用 RestTemplate 或后面介绍的 OpenFeign）
+   
+  > 下面使用的是 RestTemplate
      >
      > 同时因为可能有多台服务器提供相同的服务，所以需要使用负载均衡器去选择指定的微服务服务器，使用位于`spring-cloud-commons`包`LoadBalancerClient实例`，在 `spring-cloud-commons` 包下还有 `DiscoveryClient` 和 `ServiceRegistry` 实例
      >
      > 使用如上实例需在启动类上添加 `@EnableDiscoveryClient` 注解
-
-     开启服务发现
-
-     - 入口类添加注解 `@EnableDiscoveryClient` ，开启服务发现
-
-     - 实例化配置  RestTemplate bean 对象
-
-       ```java
+   
+  开启服务发现
+   
+  - 入口类添加注解 `@EnableDiscoveryClient`，开启服务发现
+   
+  - 实例化配置  RestTemplate bean 对象
+   
+    ```java
        @Configuration
        public class DepartCodeConfig {
        
@@ -291,10 +290,10 @@
            }
        }
        ```
-
-     - 访问微服务
-
-       ```java
+   
+  - 访问微服务
+   
+    ```java
        @GetMapping("/depart/{id}")
        public Dept getDeprt(@PathVariable Integer id){
        
@@ -313,10 +312,10 @@
            return dept;
        }
        ```
-
-     - 服务发现，获取提供的微服务
-
-       ```java
+   
+  - 服务发现，获取提供的微服务
+   
+    ```java
        @RestController
        @RequestMapping("consumer")
        public class DeprtController {
@@ -341,14 +340,14 @@
            }
        }
        ```
-
+   
 4. 搭建 Eureka Server 集群
 
    > 为了体现集群之间的关系
    >
-   > eureka7001 中应该挂上 eureka7002 和 eureka7003；
+   > eureka7001 中应该挂上 eureka7002 和 eureka7003
    >
-   > eureka7002 中应该挂上 eureka7001 和 eureka7003；
+   > eureka7002 中应该挂上 eureka7001 和 eureka7003
    >
    > eureka7003 中应该挂上 eureka7001 和 eureka7002
 
@@ -438,7 +437,7 @@
 
 3. 自定义负载均衡算法
 
-   > 从 所有 provider 中排除指定端口的 provider, 在剩余的 provider 中进行随机选择
+   > 从所有 provider 中排除指定端口的 provider, 在剩余的 provider 中进行随机选择
 
    - 实现负载均衡算法
 
@@ -521,7 +520,7 @@
 
  1. 概述
 
-    OpenFeign 比 RestTemplate 更加的简洁，只需要设置微服务的名称，不需设置在访问的时候设置IP、端口，是面向接口开发的，更符合我们的开发习惯
+    OpenFeign 比 RestTemplate 更加的简洁，只需要设置微服务的名称，不需设置在访问的时候设置 IP、端口，是面向接口开发的，更符合我们的开发习惯
 
 2. 使用 OpenFeign：
 
@@ -810,18 +809,17 @@
   
      ```xml
      <dependency>
-     	<groupId>org.springframework.cloud</groupId>
-     	<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
-   </dependency>
-     
-   <dependency>
-     	<groupId>org.springframework.cloud</groupId>
-   	<artifactId>spring-cloud-starter-netflix-zuul</artifactId>
+         <groupId>org.springframework.cloud</groupId>
+         <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+  </dependency>
+     <dependency>
+         <groupId>org.springframework.cloud</groupId>
+         <artifactId>spring-cloud-starter-netflix-zuul</artifactId>
      </dependency>
      
      <dependency>
-     	<groupId>org.springframework.boot</groupId>
-     	<artifactId>spring-boot-starter-actuator</artifactId>
+         <groupId>org.springframework.boot</groupId>
+         <artifactId>spring-boot-starter-actuator</artifactId>
      </dependency>
      ```
   
@@ -830,19 +828,18 @@
      > 注册为 eureka 客户端，并指定微服务名称
   
      ```yml
-   server:
+     server:
        port: 9000
-   
+     
      eureka:
        client:
-         service-url:
-           defaultZone: http://localhost:8000/eureka
-     
+           service-url:
+             defaultZone: http://localhost:8000/eureka
+        
      spring:
        application:
          name: kkbmsc-zuul-depart
      ```
-  
 3. 在主类上添加 `@EnableZuulProxy` 注解
   
    ```java
@@ -854,7 +851,7 @@
            SpringApplication.run(ZuulApplication.class, args);
          }
    }
-     ```
+   ```
 
   4. 启动 eureka 服务端，消费端，服务端 和 zuul，查看到已经启动的微服务
 

@@ -2,7 +2,7 @@
 
 - 登陆\退出
 
-  ```
+  ```bash
   # ssh连接成功，输入密码,-p 指定端口
   ssh root@192.168.10.222
 
@@ -16,7 +16,7 @@
 
 - 文件上传\下载
 
-  ```
+  ```bash
   # 下载文件到当前目录（自定义名称）
   curl  -o name downloadurl 
 
@@ -40,7 +40,7 @@
 
 - 常用简单命令集合
 
-  ```
+  ```bash
   # 输出当前时间
   date
 
@@ -125,7 +125,7 @@
 
 - less工具
 
-  ```
+  ```bash
   ‘>’  文件的最后一行
 
   ‘d或空格’向下滚动一页
@@ -144,7 +144,7 @@
 
 - nano文本编辑器
 
-  ```
+  ```bash
   # 删除一个字符
   Ctrl + d
 
@@ -178,7 +178,7 @@
 
 - 使用htop查看和管理进程，良好的进程展示和控制
 
-  ```
+  ```bash
   # 安装 htop
   sudo yum install htop
 
@@ -192,7 +192,7 @@
 
 - at，在特定的时间执行任务，只执行一次
 
-  ```
+  ```bash
   # 指定执行任务和时间
   at 10:38 PM Fri
   at> cowsay 'hello'
@@ -207,7 +207,7 @@
 
 - glob通配的使用：*（可加在字符串的前、中、后）  
 
-  ```
+  ```bash
   {} 例如：ls app.{css,html}  or ls app.css app.html 可以匹配括号里边的任何一个
   ？：匹配一个字符
   []:可以匹配方括号里边的任何一个字符
@@ -216,7 +216,7 @@
 
 - 常用快捷键  
 
-  ```
+  ```bash
   # 将终端显示向上滚动
   Shift + PgUp
 
@@ -277,7 +277,7 @@
 
 - 查看man手册
 
-  ```
+  ```bash
   # 搜索
   /<你要搜索的关键字>
 
@@ -319,7 +319,7 @@
 
 - 用户权限和分组
 
-  ```
+  ```bash
   # 添加用户
   sudo adduser lilei 
 
@@ -336,7 +336,7 @@
 
 - 查看文件内容
 
-  ```
+  ```bash
   # 正序显示文件内容 （参数-n可以显示行号） 
   cat filename
 
@@ -359,7 +359,7 @@
 
 - 文件编辑
 
-  ```
+  ```bash
   h:左   j下：  k：上   l：右
 
   i:插入文本，在光标所在位置之前插入
@@ -383,7 +383,7 @@
 
 - 删除
 
-  ```
+  ```bash
   dw:删除从光标开始后一个单词
 
   d$:删除从光标开始的位置到行末
@@ -391,12 +391,12 @@
   do:删除至行尾
 
   x:删除光标所在地方的字母
-
   ```
-
+```
+  
 - 复制
 
-  ```
+  ```bash
   复制一行则：yy
 
   复制多行(n代表具体数字)：nyy
@@ -404,8 +404,7 @@
   复制到行首：y$
 
   复制到行末：y^
-
-  ```
+```
 
 - 粘贴
 
@@ -433,12 +432,12 @@
   'ctrl + r' : 恢复，即回退前一个命令 
 
   'U' : 行撤销，撤销所有在前一个编辑行上的操作
-
   ```
-
+```
+  
 - 翻屏
 
-  ```
+  ```bash
   Ctrl+u: 向上翻半屏 
 
   Ctrl+f: 向上翻一屏
@@ -446,7 +445,7 @@
   Ctrl+d: 向下翻半屏 
 
   Ctrl＋b: 向下翻一屏
-  ```
+```
 
 - 移动光标
 
@@ -493,7 +492,7 @@
 
   添加环境变量：
 
-  ```
+  ```bash
   $PATH = PATH:/home/shiyanlou/mybin
   ```
 
@@ -515,13 +514,16 @@
 
   locate:查找数据库中的文件，不会实时更新，需要用updatedb刷新，
 
-      -c:指定查找文件的数目
-      -i:忽略大小写
-      例如：locate /etc/sh 匹配以sh开头的文件（会递归查找子目录的文件）
+  ```bash
+  -c:指定查找文件的数目
+  -i:忽略大小写
+例如：locate /etc/sh 匹配以sh开头的文件（会递归查找子目录的文件）
+  ```
 
   which：查找是否安装了某个命令
+  
 
-  find 应该是这几个命令中最强大的了，它不但可以通过文件类型、文件名进行查找而且可以根据文件的属性（如文件的时间戳，文件的权限等）进行搜索。find 命令强大到，要把它讲明白至少需要单独好几节课程才行，我们这里只介绍一些常用的内容。
+find 应该是这几个命令中最强大的了，它不但可以通过文件类型、文件名进行查找而且可以根据文件的属性（如文件的时间戳，文件的权限等）进行搜索。find 命令强大到，要把它讲明白至少需要单独好几节课程才行，我们这里只介绍一些常用的内容。
   注意 find 命令的路径是作为第一个参数的， 基本命令格式为 find [path] [option] [action] 。
 
   与时间相关的命令参数：
@@ -533,7 +535,7 @@
 
 - 查看文件
 
-  ```
+  ```bash
   # 查看文件（S:按大小排序）
   ls -AsSh 
 
@@ -543,7 +545,7 @@
 
 - 修改文件的所有者和权限
 
-  ```
+  ```bash
   # 修改指定文件的所有者
   chown shiyanlou iphone6
   # 修改文件的权限r=4,w=2,x=1
@@ -577,7 +579,7 @@
 
 - 文件系统操作与文件管理
 
-  ```
+  ```bash
   df -h 显示所有的挂载点
   du -h 显示单个文件的大小
   参数说明： -h # 同--human-readable 以K，M，G为单位，提高信息的可读性。
@@ -587,7 +589,7 @@
 
 - Linux任务计划crontab
 
-  通常，crontab储存的指令被守护进程激活，crond 为其守护进程，crond常常在后台运行，每一分钟会检查一次是否有预定的作业需要执行。
+  通常，crontab 储存的指令被守护进程激活，crond 为其守护进程，crond常常在后台运行，每一分钟会检查一次是否有预定的作业需要执行。
 
   定义任务执行时间格式
 
@@ -611,20 +613,20 @@
 
 - 进程
 
-  ```
+  ```bash
   # 列出所有进程长格式的详细信息
   ps -ef 
   
-  # 列出当前用户所有跟terminal关联的进程详细信息
+  # 列出当前用户所有跟 terminal 关联的进程详细信息
   ps -af 
   
   # 列出所有进程的信息
-  ps -ax 
+  ps -ax
   ```
 
 - netstat、telnet查看端口状态
 
-  ```
+  ```bash
   # 判断端口是否能访问
   telnet 192.168.10.222 8888
   
@@ -646,7 +648,7 @@
 
 - chkconfig查看和停止linux启动的服务
 
-  ```
+  ```bash
   #注意：添加服务到chkconfig之前，需要把启动文件nexus放到/etc/init.d目录
   #修改配置/etc/init.d/nexus， 指定nexus文件的home目录
   NEXUS_HOME="/data/edu/nexus/nexus-2.14.8-01"
@@ -692,7 +694,7 @@
   >
   > 参考[文章](https://blog.csdn.net/redlevin/article/details/79631856)
 
-  ```
+  ```bash
   # 安装fontconfig，使用fontconfig安装字体库
   yum -y install fontconfig
   
@@ -731,19 +733,19 @@
 
   方法一：如果您有多台服务器，不想在每台服务器上设置，只需在客户端的 ~/.ssh/ 文件夹中添加 config 文件，并添加下面的配置，60表示60秒向客户端发送一次请求：
 
-  ```
+  ```bash
   ServerAliveInterval 60
   ```
 
   方法二：如果您有多个人管理服务器，不想在每个客户端进行设置，只需在服务器的 /etc/ssh/sshd_config 中添加如下的配置，60表示60秒向服务器发送一次请求,从而保持长连接：
 
-  ```
+  ```bash
   ClientAliveInterval 60
   ```
 
   方法三：如果您只想让当前的 ssh 保持连接，60表示60秒向服务器发送一次请求，从而保持长连接，可以使用以下的命令：
 
-  ```
+  ```bash
   $ ssh -o ServerAliveInterval=60 user@sshserver
   ```
 
@@ -751,19 +753,19 @@
 
   > 统计当前文件夹下文件的个数，包括子文件夹里的
 
-  ```
+  ```bash
   ls -lR|grep "^-"|wc -l
   ```
 
   > 统计文件夹下目录的个数，包括子文件夹里的
 
-  ```
+  ```bash
   ls -lR|grep "^d"|wc -l
   ```
 
   > 统计当前文件夹下文件的个数
 
-  ```
+  ```bash
   ls -l |grep "^-"|wc -l
   ```
 
@@ -779,7 +781,7 @@
   >
   > -t： 关闭watch 命令在顶部的时间间隔命令
 
-  ```
+  ```bash
   # 每隔一秒高亮显示网络链接数的变化情况
   $ watch -n 1 -d netstat  -ant 
   
@@ -791,7 +793,7 @@
 
   > dmesg 命令显示 linux 内核的环形缓冲区信息，我们可以从中获得诸如系统架构、cpu、挂载的硬件，RAM 等多个运行级别的大量的系统信息。当计算机启动时，系统内核（操作系统的核心部分）将会被加载到内存中。**一般可以用它判断是否检测到硬件**。
 
-  ```
+  ```bash
   # 检测是否检测到 Leap Motion
   $ dmesg | grep -i leap
   ```
@@ -807,6 +809,66 @@
    lsusb：查看usb信息
 
    arch：查看系统的架构  x86 表示32位  x86_64表示64位
+
+- jps 查看 java 相关进程
+
+- 网络配置静态 IP
+
+  > 设置 linux 服务器的局域网 IP 网管等信息 
+
+  ```bash
+  vim /etc/sysconfig/network-scripts/ifcfg-ens33
+  ```
+
+  配置文件的内容如下
+
+  > 修改如下配置，其中 GATEWAY 和 IPADDR 根据自己电脑的所在局域网进行配置
+  > 如果是虚拟机，选择的桥接模式的话，GATEWAY  和 主机的保持一致
+
+  ```shell
+  BOOTPROTO="static"       # 静态 IP 地址
+  ONBOOT="yes"             # 开机启动网卡
+  IPADDR="192.168.1.107"   # 局域网 IP
+  GATEWAY="192.168.1.1"    # 网关
+  NETMASK="255.255.255.0"  # 子网掩码
+  DNS1="8.8.8.8"           # DNS 服务器地址
+  DNS2="114.114.114.114"   # DNS 服务器地址
+  ```
+
+  重启 network 模块
+
+  ```bash
+  # cetos7 以前版本
+  serrvice restart network
+  
+  # centos7
+  systemctl restart network
+  ```
+
+- 防火墙配置
+
+  ```bash
+  # centos7 之前关闭防火墙
+  ckconfig iptables off
+  service iptables stop
+  
+  # centos7 关闭防火墙
+  systemctl stop firewalld 
+  systemctl disable firewalld
+  ```
+
+  
+
+
+
+
+
+
+
+
+
+
+
 
 
 常用命令总结：https://mp.weixin.qq.com/s/2dBCvFGoZBv_yy2arvpqag

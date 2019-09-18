@@ -157,7 +157,7 @@ mvn dependency:tree
 
 #### 继承
 
-> dependencyManagement 和 pluginManagement定义在父 pom，子 pom 使用 parent 继承， 子 pom 想选择性继承且可以不指定版本号（也可指定），版本号由父 pom 统一管理
+> dependencyManagement 和 pluginManagement 定义在父 pom，子 pom 使用 parent 继承， 子 pom 想选择性继承且可以不指定版本号（也可指定），版本号由父 pom 统一管理
 
 - dependencyManagement: 能让子 POM 继承父POM的配置的同时, 又能够保证子模块的灵活性: 在父POM dependencyManagement 元素配置的依赖声明不会实际引入子模块中, 但能够约束子模块 dependencies 下的依赖的使用 (子模块只需配置groupId与artifactId)，可以参考： spring-boot 
 - pluginManagement: 与dependencyManagement类似,  配置的插件不会造成实际插件的调用行为, 只有当子POM 中配置了相关 plugin 元素, 才会影响实际的插件行为

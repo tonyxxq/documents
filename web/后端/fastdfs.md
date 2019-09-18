@@ -19,7 +19,7 @@
 
 ### 三、FastDFS 架构原理分析
 
-> 原理中还有 文件同步、新增 torage server 流程还没有理解
+> 原理中还有 文件同步、新增 storage server 流程还没有理解
 
 - 架构
 
@@ -45,7 +45,7 @@
   FDFS_STORAGE_STATUS_ACTIVATE   ：在线，可以提供服务
   ```
 
-  当 strage server 的状态为 FDFS_STORAGE_STATUS_ONLINE时，当该 storage_server 发起一次心跳时，tracker_server 将其状态改为 FDFS_STORAGE_STATUS_ACTIVATE
+  当 storage server 的状态为 FDFS_STORAGE_STATUS_ONLINE 时，当该 storage_server 发起一次心跳时，tracker_server 将其状态改为 FDFS_STORAGE_STATUS_ACTIVATE
 
 - 文件上传流程
 
@@ -65,7 +65,7 @@
 
   ![](imgs/128.png)
 
-  注意：文件的 file_id 中已经包括了文件的源服务器 IP、文件创建时间等信息 
+  注意：文件的 file_id 中已经包括了文件的源服务器 IP、文件创建时间等信息
 
 - 新增 Storage Server
 
@@ -77,7 +77,7 @@
 
   > 至少需要一台 tracker server 和一台 storage server
   >
-  > 可以把 tracker server  和 storage server同时安装，他们之间的区别是配置文件的不同
+  > 可以把 tracker server  和 storage server 同时安装，它们之间的区别是配置文件的不同
 
   ```bash
   # 安装 c 语言环境编译,libevent,wget
@@ -207,7 +207,7 @@
   为什么要使用 Nginx 扩展模块？
 
   1. 合并之后的文件，不通过 nginx 扩展模块是访问不到的
-  2. 文件如果文件未同步成功，使用 nginx 扩展模块可以转发或重定向到源服务器
+  2. 如果文件未同步成功，使用 nginx 扩展模块可以转发或重定向到源服务器
 
 - 安装
 
@@ -329,11 +329,11 @@
 
 - FastDFS 合并存储文件大小
 
-  FastDFS 提供的合并存储功能，默认创建的大文件为默认 64 MB，然后在该大文件中存储很多小文件。大文件中容纳一个小文件的空间称为一个 Slot，规定Slot最小值为默认 256 字节，最大为默认 16MB，也就是小于 256 字节的文件也需要占用256字节，**超过16MB的文件不会合并存储而是创建独立的文件**
+  FastDFS 提供的合并存储功能，默认创建的大文件为默认 64 MB，然后在该大文件中存储很多小文件。大文件中容纳一个小文件的空间称为一个 Slot，规定 Slot 最小值为默认 256 字节，最大为默认 16MB，也就是小于 256 字节的文件也需要占用 256 字节，**超过16MB 的文件不会合并存储而是创建独立的文件**
 
-- 合并存储文件的 file_id 
+- 合并存储文件的 file_id
 
-  file_id 和普通的文件file_id 不一样，除了普通文件包括的信息外，还包括了文件所属的 `trunk_id`和 内容在文件的`偏移量 offset`，所以会比普通的文件的文件名长一些
+  file_id 和普通的文件 file_id 不一样，除了普通文件包括的信息外，还包括了文件所属的 `trunk_id`和 内容在文件的`偏移量 offset`，所以会比普通的文件的文件名长一些
 
 - 配置 tracker.conf（tracker 服务器），开启合并存储
 
@@ -372,7 +372,7 @@
 
   > 先上传主文件，得到主文件的 field_id
   >
-  > 然后上传从文件（缩略图），使用主文件 field_id作为关联
+  > 然后上传从文件（缩略图），使用主文件 field_id 作为关联
   >
   > fastdfs 提供了关联主从文件的 API
   >
@@ -389,7 +389,7 @@
           String[] result2 = FileUploadUtils.uploadSlaveFile(result[1], "D:\\slave.png", "_100_100", ".png");
           System.out.println("组名：" + result2[0]);
           System.out.println("文件名： " + result2[1] + "\n");
-      }
+  }
   ```
 
   输出：

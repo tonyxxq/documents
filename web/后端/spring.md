@@ -54,8 +54,6 @@
    }
    ```
 
-
-
 ## Spring AOP 原理分析
 
 > OOP 的继承是纵向抽取，AOP 是横向抽取
@@ -137,8 +135,6 @@ public class MyProxyUtils {
     }
 }
 ```
-
-
 
 #### Spring AOP 的使用(Aspect)
 

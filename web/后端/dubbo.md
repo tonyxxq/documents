@@ -509,7 +509,7 @@ public interface EmployeeService {
 
 #### 消费端
 
-1. 添加 zkClient 依赖、Dubbo 与 Spring Bootg 整合依赖 common 工程依赖
+1. 添加 zkClient 依赖、Dubbo 与 Spring Boot 整合依赖 common 工程依赖
 
    > 和 provider 一致
 
@@ -555,6 +555,25 @@ public interface EmployeeService {
    ```
 
 5. 启动
+
+### 获取服务地址（服务发现）
+
+从 ZooKeeper 中获取指定的服务
+
+```java
+ZkClient zkClient = new ZkClient("ip:port", 5000);
+list = zkClient.getChildren("/dubbo/xxx/providers");
+
+Iterator<String> it = list.iterator();
+while (it.hasNext()) {
+    str = (String)it.next();
+    System.out.println("返回provider信息："+str);
+    break;
+}
+
+ip = getip(str);
+port =getport(str);
+```
 
 ### Dubbo 监控平台
 
